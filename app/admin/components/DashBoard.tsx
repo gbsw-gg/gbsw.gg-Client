@@ -1,6 +1,10 @@
 import { ChevronRight } from "lucide-react";
 
-export default function DashBoard() {
+interface Props {
+  onSelectBus: (busId: number) => void;
+}
+
+export default function DashBoard({ onSelectBus }: Props) {
   return (
     <div className="w-full h-auto p-6.25 bg-white flex flex-col">
       <div className="w-full h-auto px-6.25 py-5 bg-white flex flex-col rounded-[20px] shadow-sm">
@@ -43,7 +47,7 @@ export default function DashBoard() {
 
       <div className="w-full h-auto flex flex-col gap-5">
         {[1, 2, 3, 4].map((item) => (
-          <div className="w-full h-auto flex flex-col p-5 rounded-[20px] shadow-sm cursor-pointer">
+          <div key={item} onClick={() => onSelectBus(item)} className="w-full h-auto flex flex-col p-5 rounded-[20px] shadow-sm cursor-pointer">
             <div className="w-full flex flex-row justify-between">
               <p className="text-[20px] font-bold text-[#3c3c3c]">{item}호차</p>
               <ChevronRight color="#3c3c3c" />
@@ -53,9 +57,9 @@ export default function DashBoard() {
             </p>
 
             <div className="w-full h-auto flex flex-row gap-9 mt-4">
-              {["전체", "사전 미탑승", "미확인", "탑승 완료"].map((item) => (
-                <div className="w-auto h-auto flex flex-col items-center">
-                  <p className="text-[10px] text-black font-medium">{item}</p>
+              {["전체", "사전 미탑승", "미확인", "탑승 완료"].map((label) => (
+                <div key={label} className="w-auto h-auto flex flex-col items-center">
+                  <p className="text-[10px] text-black font-medium">{label}</p>
                   <p className="text-[14px] text-black font-bold">0</p>
                 </div>
               ))}
