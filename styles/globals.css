@@ -17,17 +17,29 @@
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
+
 .wrapper::-webkit-scrollbar {
   display: none;
 }
 
-html {
+html, body {
   height: 100%;
 }
 
 body {
-  height: 100%;
   margin: 0;
   padding: 0;
   background-color: #e4e4e4;
+}
+
+html, body, * {
+  user-select: none;
+}
+
+input, textarea {
+  user-select: text;
+}
+
+button {
+  cursor: pointer;
 }
