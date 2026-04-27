@@ -1,15 +1,27 @@
 'use client';
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Icons } from "@/icons";
 import Image from "next/image";
 
 export default function Home() {
+  const router = useRouter();
   const [id, setId] = useState('');
   const [password, setPassword] = useState('');
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    // TODO: 실제 백엔드 API 호출 후 응답의 role 값으로 라우팅
+    // 백엔드 응답 예시: { role: "학생" | "도우미" | "어드민" }
+    const mockRole: "학생" | "도우미" | "어드민" =
+      id === "leader" ? "도우미" : "학생";
+
+    if (mockRole === "도우미") {
+      router.push("/auth/leader");
+    } else {
+      router.push("/auth/student");
+    }
   }
 
   return (
