@@ -24,10 +24,10 @@ const statusConfig: Record<
     icon: <Info size={28} color="#B0B0B0" />,
   },
   "탑승 완료": {
-    color: "#02AB87",
-    borderColor: "#02AB87",
+    color: "#10B981",
+    borderColor: "#10B981",
     bgColor: "white",
-    icon: <CheckCircle size={28} color="#02AB87" />,
+    icon: <CheckCircle size={28} color="#10B981" />,
   },
   미탑승: {
     color: "#EF4444",
@@ -43,7 +43,7 @@ export default function StatusCard({ status, timestamp, reason }: StatusCardProp
   return (
     <div
       className="mx-[25px] mt-[14px] bg-white rounded-[20px] shadow-[0_4px_10px_0_rgba(0,0,0,0.15)]"
-      style={{ border: `1.5px solid ${config.borderColor}` }}
+      style={{ border: `2px solid ${config.borderColor}` }}
     >
       <div className="mx-[25px] py-[20px] flex justify-between items-center">
         <div className="flex flex-col gap-[4px]">
