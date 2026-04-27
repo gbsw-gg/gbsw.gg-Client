@@ -1,14 +1,14 @@
 "use client";
 
 import { CheckCircle, XCircle, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 type ModalType = "checkin" | "absent";
 
 interface ConfirmModalProps {
   type: ModalType;
-  onConfirm: () => void;
+  onConfirm: (reason?: string) => void;
   onCancel: () => void;
 }
 
@@ -23,8 +23,7 @@ const modalConfig = {
   absent: {
     icon: <XCircle size={36} color="#EF4444" />,
     title: "미탑승 신청하기",
-    description:
-      "정말 미탑승 신청하시겠습니까?\n신청 후에는 수정할 수 없습니다.",
+    description: "미탑승 사유를 입력해 주세요.",
     confirmLabel: "신청하기",
     confirmColor: "bg-[#EF4444]",
   },
@@ -38,12 +37,16 @@ export default function ConfirmModal({
   const config = modalConfig[type];
   const [visible, setVisible] = useState(false);
   const [wrapper, setWrapper] = useState<Element | null>(null);
+  const [reason, setReason] = useState("");
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    // .wrapper 요소를 포털 타겟으로 사용
-    setWrapper(document.querySelector(".wrapper"));
-    const timer = setTimeout(() => setVisible(true), 10);
-    return () => clearTimeout(timer);
+    const wrapperTimer = setTimeout(() => setWrapper(document.querySelector(".wrapper")), 0);
+    const visibleTimer = setTimeout(() => setVisible(true), 10);
+    return () => {
+      clearTimeout(wrapperTimer);
+      clearTimeout(visibleTimer);
+    };
   }, []);
 
   const handleCancel = () => {
@@ -52,8 +55,9 @@ export default function ConfirmModal({
   };
 
   const handleConfirm = () => {
+    if (type === "absent" && reason.trim() === "") return;
     setVisible(false);
-    setTimeout(onConfirm, 300);
+    setTimeout(() => onConfirm(type === "absent" ? reason.trim() : undefined), 300);
   };
 
   if (!wrapper) return null;
@@ -84,7 +88,7 @@ export default function ConfirmModal({
         </button>
 
         {/* 아이콘 + 텍스트 */}
-        <div className="flex flex-col items-center gap-[12px] mb-[32px] mt-[12px]">
+        <div className="flex flex-col items-center gap-[12px] mb-[24px] mt-[12px]">
           {config.icon}
           <h2 className="text-[18px] font-bold text-[#3C3C3C]">
             {config.title}
@@ -94,11 +98,23 @@ export default function ConfirmModal({
           </p>
         </div>
 
+        {/* 미탑승 사유 입력 */}
+        {type === "absent" && (
+          <textarea
+            ref={textareaRef}
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder="사유를 입력하세요"
+            className="w-full h-[100px] bg-[#F7F7F7] rounded-[14px] px-[16px] py-[14px] text-[14px] text-[#3C3C3C] font-medium placeholder:text-[#B0B0B0] resize-none outline-none mb-[16px]"
+          />
+        )}
+
         {/* 버튼 — 세로 배치 */}
         <div className="flex flex-col gap-[10px]">
           <button
             onClick={handleConfirm}
-            className={`w-full h-[56px] ${config.confirmColor} rounded-[14px] text-white font-semibold text-[16px] active:opacity-80 transition-opacity`}
+            disabled={type === "absent" && reason.trim() === ""}
+            className={`w-full h-[56px] ${config.confirmColor} rounded-[14px] text-white font-semibold text-[16px] transition-opacity disabled:opacity-40 active:enabled:opacity-80`}
           >
             {config.confirmLabel}
           </button>
