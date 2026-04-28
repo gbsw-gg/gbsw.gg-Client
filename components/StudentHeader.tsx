@@ -5,6 +5,7 @@ interface StudentHeaderProps {
   grade: number;
   classNum: number;
   number: number;
+  onLogout?: () => void;
 }
 
 export default function StudentHeader({
@@ -12,6 +13,7 @@ export default function StudentHeader({
   grade,
   classNum,
   number,
+  onLogout,
 }: StudentHeaderProps) {
   return (
     <div className="mt-[90px] mx-6 flex justify-between items-center">
@@ -21,7 +23,10 @@ export default function StudentHeader({
           {grade}학년 {classNum}반 {number}번
         </p>
       </div>
-      <button className="w-6 h-6 flex justify-center items-center">
+      <button
+        onClick={onLogout}
+        className="w-6 h-6 flex justify-center items-center"
+      >
         <LogOut size={18} color="white" />
       </button>
     </div>
