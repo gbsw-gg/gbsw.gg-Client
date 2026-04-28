@@ -1,6 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { useAttendance } from "@/hooks/useAttendance";
+import { useUser } from "@/context/UserContext";
+import { useRequireRole } from "@/hooks/useRequireRole";
 import StudentHeader from "@/components/StudentHeader";
 import BusInfoCard from "@/components/BusInfoCard";
 import StatusCard from "@/components/StatusCard";
@@ -34,7 +38,23 @@ const mockStudents: Student[] = [
   { name: "양선민", grade: 3, classNum: 2, status: "미확인" },
 ];
 
+// TODO: 활성 회차 API 연동 후 대체
+const MOCK_SCHEDULE = {
+  scheduleId: "schedule-1",
+  busNumber: "4호차",
+};
+
 export default function LeaderPage() {
+  const { logout } = useAuth();
+  const { checkBoarding, requestAbsent } = useAttendance();
+  const { user } = useUser();
+  const { isChecking } = useRequireRole(['LEADER']);
+
+  const name = user ? `${user.name} (도우미)` : "도우미";
+  const grade = user?.grade ?? 0;
+  const classNum = user?.classNum ?? 0;
+  const userId = String(user?.id ?? "");
+
   const [status, setStatus] = useState<StatusType>("미확인");
   const [timestamp, setTimestamp] = useState<string | undefined>(undefined);
   const [modal, setModal] = useState<ModalType>(null);
@@ -43,19 +63,27 @@ export default function LeaderPage() {
   const isConfirmed = status === "탑승 완료" || status === "미탑승";
   const showDashboard = status === "탑승 완료";
 
-  const handleConfirm = (reason?: string) => {
+  const formatTimestamp = () => {
     const now = new Date();
-    const formatted = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")} ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")} ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+  };
 
-    if (modal === "checkin") {
-      setStatus("탑승 완료");
-    } else if (modal === "absent") {
-      setStatus("미탑승");
-      setAbsentReason(reason);
+  const handleConfirm = async (reason?: string) => {
+    try {
+      if (modal === "checkin") {
+        await checkBoarding(userId, MOCK_SCHEDULE.busNumber, MOCK_SCHEDULE.scheduleId);
+        setStatus("탑승 완료");
+      } else if (modal === "absent") {
+        await requestAbsent(userId, MOCK_SCHEDULE.busNumber, MOCK_SCHEDULE.scheduleId, reason ?? "");
+        setStatus("미탑승");
+        setAbsentReason(reason);
+      }
+      setTimestamp(formatTimestamp());
+    } catch {
+      // 에러 토스트는 useAttendance 내부에서 처리
+    } finally {
+      setModal(null);
     }
-
-    setTimestamp(formatted);
-    setModal(null);
   };
 
   const total = mockStudents.length;
@@ -63,13 +91,15 @@ export default function LeaderPage() {
   const absentCount = mockStudents.filter((s) => s.status === "사전 미탑승").length;
   const unchecked = mockStudents.filter((s) => s.status === "미확인").length;
 
+  if (isChecking) return null;
+
   return (
     <>
       {!showDashboard ? (
         /* ── Phase 1: 본인 탑승 체크 ── */
         <div className="min-h-full flex flex-col">
           <div className="bg-[#05A787] pb-[80px]">
-            <StudentHeader name="김환성 (도우미)" grade={3} classNum={1} number={16} />
+            <StudentHeader name={name} grade={grade} classNum={classNum} number={0} onLogout={logout} />
           </div>
           <div className="flex flex-col mt-[-60px]">
             <BusInfoCard
@@ -92,7 +122,7 @@ export default function LeaderPage() {
         /* ── Phase 2: 도우미 대시보드 ── */
         <div className="min-h-full flex flex-col">
           <div className="bg-[#05A787] pb-[80px]">
-            <StudentHeader name="김환성 (도우미)" grade={3} classNum={1} number={16} />
+            <StudentHeader name={name} grade={grade} classNum={classNum} number={0} onLogout={logout} />
           </div>
 
           <div className="flex flex-col mt-[-60px]">
