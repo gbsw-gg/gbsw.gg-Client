@@ -14,7 +14,7 @@ export default function Header({ selected, onSelect }: { selected: Menu; onSelec
       <div className="w-full h-auto flex flex-row justify-between items-center mt-15">
         <div className="w-auto h-full flex flex-col justify-between gap-2.5">
           <p className="text-[24px] font-bold text-white">관리자</p>
-          <p className="text-[14px] font-medium text-white">교사 (username)</p>
+          <p className="text-[14px] font-medium text-white"></p>
         </div>
         <LogOut color="white" size={24} className="cursor-pointer" />
       </div>
