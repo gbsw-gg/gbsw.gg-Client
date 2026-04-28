@@ -1,25 +1,46 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import RoundCard from './RoundCard';
 import RoundCreateForm from './RoundCreactForm';
+import api, { ApiResponse } from '@/lib/api';
 
+interface Schedule {
+  id: number;
+  name: string;
+  type: 'OUTBOUND' | 'INBOUND';
+  departAt: string;
+  isActive: boolean;
+}
 
-const mock = [
-  { id: 1, title: '2026년 3월 2주차 귀가', type: '귀가', startTime: '출발: 2026-03-20 15:00', active: false },
-  { id: 2, title: '2026년 3월 2주차 귀교', type: '귀교', startTime: '출발: 2026-03-22 18:00', active: true }
-];
+const TYPE_LABEL: Record<string, string> = {
+  OUTBOUND: '귀가',
+  INBOUND: '귀교',
+};
 
 export default function RoundManage() {
-  const [rounds, setRounds] = useState(mock);
+  const [rounds, setRounds] = useState<Schedule[]>([]);
+  const [loaded, setLoaded] = useState(false);
   const [showForm, setShowForm] = useState(false);
 
-  const handleToggle = (id: number) => {
-    setRounds(prev => prev.map(r => ({ ...r, active: r.id === id && !r.active })));
+  const fetchRounds = useCallback(() => {
+    api.get<ApiResponse<Schedule[]>>('/api/schedules')
+      .then(res => { if (res.success) setRounds(res.data); })
+      .catch(() => {})
+      .finally(() => setLoaded(true));
+  }, []);
+
+  useEffect(() => { fetchRounds(); }, [fetchRounds]);
+
+  const handleToggle = async (id: number, isActive: boolean) => {
+    const action = isActive ? 'deactivate' : 'activate';
+    await api.patch<ApiResponse>(`/api/schedules/${id}/${action}`).catch(() => {});
+    fetchRounds();
   };
 
-  const handleDelete = (id: number) => {
-    // 추후 API 연동
+  const handleDelete = async (id: number) => {
+    await api.delete<ApiResponse>(`/api/schedules/${id}`).catch(() => {});
+    fetchRounds();
   };
 
   return (
@@ -29,11 +50,28 @@ export default function RoundManage() {
         <div onClick={() => setShowForm(true)} className="w-auto h-auto px-4 py-3 flex justify-center items-center text-[14px] font-bold text-white bg-[#02AB87] rounded-[10px] cursor-pointer duration-200 hover:bg-[#049173]">+ 회차 생성</div>
       </div>
 
+      {loaded && rounds.length === 0 && (
+        <p className="text-[14px] font-medium text-[#747474] text-center mt-10">회차 목록이 비어있습니다</p>
+      )}
+
       {rounds.map(round => (
-        <RoundCard key={round.id} title={round.title} type={round.type} startTime={round.startTime} active={round.active} onToggle={() => handleToggle(round.id)} onDelete={() => handleDelete(round.id)} />
+        <RoundCard
+          key={round.id}
+          title={round.name}
+          type={TYPE_LABEL[round.type]}
+          startTime={`출발: ${round.departAt.replace('T', ' ').slice(0, 16)}`}
+          active={round.isActive}
+          onToggle={() => handleToggle(round.id, round.isActive)}
+          onDelete={() => handleDelete(round.id)}
+        />
       ))}
 
-      {showForm && <RoundCreateForm onClose={() => setShowForm(false)} />}
+      {showForm && (
+        <RoundCreateForm
+          onClose={() => setShowForm(false)}
+          onSuccess={() => { setShowForm(false); fetchRounds(); }}
+        />
+      )}
     </div>
   );
 }

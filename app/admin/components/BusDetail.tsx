@@ -1,26 +1,50 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { ChevronLeft } from 'lucide-react';
+import api, { ApiResponse } from '@/lib/api';
 
 interface Props {
   busId: number;
+  leaderName: string;
   onBack: () => void;
 }
 
-export default function BusDetail({ busId, onBack }: Props) {
-  const data = { leader: '', students: [] as { name: string; num: string; status: string }[] };
-  const mock = data.students;
+interface StudentRecord {
+  busNumber: number;
+  studentName: string;
+  grade: number;
+  classNum: number;
+  status: 'BOARDING' | 'PRE_ABSENT' | 'ABSENT';
+}
 
-  const total = mock.length;
-  const boarded = mock.filter(s => s.status === '탑승 완료').length;
-  const preAbsent = mock.filter(s => s.status === '사전 미탑승').length;
-  const unknown = mock.filter(s => s.status === '미확인').length;
+const STATUS_LABEL: Record<string, string> = {
+  BOARDING: '탑승 완료',
+  PRE_ABSENT: '사전 미탑승',
+  ABSENT: '미확인',
+};
 
-  const statusColor: Record<string, string> = {
-    '탑승 완료': 'text-[#10B981]',
-    '사전 미탑승': 'text-[#FACC15]',
-    '미확인': 'text-[#3c3c3c]'
-  };
+const STATUS_COLOR: Record<string, string> = {
+  '탑승 완료': 'text-[#10B981]',
+  '사전 미탑승': 'text-[#FACC15]',
+  '미확인': 'text-[#3c3c3c]',
+};
+
+export default function BusDetail({ busId, leaderName, onBack }: Props) {
+  const [students, setStudents] = useState<StudentRecord[]>([]);
+
+  useEffect(() => {
+    api.get<ApiResponse<StudentRecord[]>>('/api/admin/records')
+      .then(res => {
+        if (res.success) setStudents(res.data.filter(r => r.busNumber === busId));
+      })
+      .catch(() => {});
+  }, [busId]);
+
+  const total = students.length;
+  const boarded = students.filter(s => s.status === 'BOARDING').length;
+  const preAbsent = students.filter(s => s.status === 'PRE_ABSENT').length;
+  const unknown = students.filter(s => s.status === 'ABSENT').length;
 
   return (
     <div className="w-full h-auto p-6.25 bg-white flex flex-col">
@@ -30,7 +54,7 @@ export default function BusDetail({ busId, onBack }: Props) {
 
       <div className="w-full h-auto px-6.25 py-5 bg-white flex flex-col rounded-[20px] shadow-sm">
         <p className="text-[#3c3c3c] text-[24px] font-bold">{busId}호차</p>
-        <p className="text-[12px] text-[#747474] font-medium mt-1">대표자: {data.leader}</p>
+        <p className="text-[12px] text-[#747474] font-medium mt-1">대표자: {leaderName}</p>
 
         <div className="w-full h-px bg-[#d2d2d2] my-5" />
 
@@ -63,15 +87,18 @@ export default function BusDetail({ busId, onBack }: Props) {
       </div>
 
       <div className="w-full flex flex-col gap-3">
-        {mock.map((p, i) => (
-          <div key={i} className="w-full flex flex-row justify-between items-center py-3 px-4 rounded-xl bg-white shadow-sm">
-            <div className="w-auto h-full justify-between">
-              <p className="text-[14px] font-bold text-[#3c3c3c]">{p.name}</p>
-              <p className='text-[12px] font medium text-[#3c3c3c]'>{p.num}</p>
+        {students.map((s, i) => {
+          const label = STATUS_LABEL[s.status];
+          return (
+            <div key={i} className="w-full flex flex-row justify-between items-center py-3 px-4 rounded-xl bg-white shadow-sm">
+              <div className="w-auto h-full justify-between">
+                <p className="text-[14px] font-bold text-[#3c3c3c]">{s.studentName}</p>
+                <p className="text-[12px] font-medium text-[#3c3c3c]">{s.grade}학년 {s.classNum}반</p>
+              </div>
+              <p className={`text-[12px] font-bold ${STATUS_COLOR[label]}`}>{label}</p>
             </div>
-            <p className={`text-[12px] font-bold ${statusColor[p.status]}`}>{p.status}</p>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
