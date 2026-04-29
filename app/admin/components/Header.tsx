@@ -1,10 +1,10 @@
 "use client";
 
-import { LogOut, ChartColumn, CalendarDays } from "lucide-react";
+import { LogOut, ChartColumn, CalendarDays, ArrowLeftRight } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useUser } from "@/context/UserContext";
 
-type Menu = "dashboard" | "round";
+type Menu = "dashboard" | "round" | "busChange";
 
 export default function Header({ selected, onSelect }: { selected: Menu; onSelect: (menu: Menu) => void }) {
   const { logout } = useAuth();
@@ -33,6 +33,11 @@ export default function Header({ selected, onSelect }: { selected: Menu; onSelec
         <div onClick={() => onSelect("round")} className={`w-auto h-full px-2.5 flex justify-center items-center rounded-lg gap-2 cursor-pointer ${bg("round")}`}>
           <CalendarDays color={color("round")} size={12} />
           <p className={`text-[12px] font-medium select-none ${text("round")}`}>회차 관리</p>
+        </div>
+
+        <div onClick={() => onSelect("busChange")} className={`w-auto h-full px-2.5 flex justify-center items-center rounded-lg gap-2 cursor-pointer ${bg("busChange")}`}>
+          <ArrowLeftRight color={color("busChange")} size={12} />
+          <p className={`text-[12px] font-medium select-none ${text("busChange")}`}>호차 변경</p>
         </div>
       </div>
     </div>

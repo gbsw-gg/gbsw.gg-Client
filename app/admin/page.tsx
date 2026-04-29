@@ -6,8 +6,9 @@ import Header from "./components/Header";
 import DashBoard from "./components/DashBoard";
 import RoundManage from "./components/RoundManage";
 import BusDetail from "./components/BusDetail";
+import BusChangeManage from "./components/BusChangeManage";
 
-type Menu = "dashboard" | "round";
+type Menu = "dashboard" | "round" | "busChange";
 
 export default function Admin() {
   const { isChecking } = useRequireRole(['ADMIN']);
@@ -32,6 +33,7 @@ export default function Admin() {
           <BusDetail busId={selectedBus.id} leaderName={selectedBus.leaderName} onBack={() => setSelectedBus(null)} />
         )}
         {selected === "round" && <RoundManage />}
+        {selected === "busChange" && <BusChangeManage />}
       </div>
     </div>
   );
