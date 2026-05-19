@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Icons } from "@/icons";
 import Image from "next/image";
 import { useAuth } from "@/hooks/useAuth";
 import { useUser } from "@/context/UserContext";
@@ -37,7 +36,7 @@ export default function Home() {
 
   return (
     <div className="max-w-125 min-h-full flex flex-col items-center justify-center p-12.5">
-      <Image src={Icons.Logo} alt="logo" width={100}/>
+      <Image src="/images/logo.png" alt="logo" width={100} height={100} />
       <p className="text-[20px] text-[#3c3c3c] font-bold mt-7.5">경소마고 귀가/귀교 버스 탑승 관리</p>
       <form onSubmit={handleLogin} className="w-full h-auto flex flex-col gap-10 mt-15">
         <div className="w-full h-auto flex flex-col justify-between">
