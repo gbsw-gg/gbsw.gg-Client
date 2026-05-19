@@ -38,7 +38,7 @@ export default function LogoutModal({ onConfirm, onClose }: LogoutModalProps) {
     <>
       <div
         className="absolute inset-0 z-40 bg-black/40 rounded-[30px] transition-opacity duration-300"
-        style={{ opacity: visible ? 1 : 0 }}
+        style={{ opacity: visible ? 1 : 0, pointerEvents: visible ? 'auto' : 'none' }}
         onClick={handleClose}
       />
 
