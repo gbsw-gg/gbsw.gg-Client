@@ -49,7 +49,10 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config as AxiosRequestConfig & { _retry?: boolean };
 
-    if (error.response?.status !== 401 || originalRequest._retry) {
+    const url = originalRequest.url ?? '';
+    const isAuthEndpoint = url.includes('/api/auth/');
+
+    if (error.response?.status !== 401 || originalRequest._retry || isAuthEndpoint) {
       return Promise.reject(error.response?.data ?? error);
     }
 
