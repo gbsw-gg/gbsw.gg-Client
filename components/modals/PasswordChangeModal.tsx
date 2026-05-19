@@ -1,6 +1,5 @@
 "use client";
 
-import { X } from "lucide-react";
 import { useEffect, useState } from "react";
 import api, { ApiResponse } from "@/lib/api";
 import { useToast } from "@/context/ToastContext";
@@ -69,11 +68,8 @@ export default function PasswordChangeModal({ onClose }: PasswordChangeModalProp
       >
         <div className="w-[40px] h-[4px] bg-[#D2D2D2] rounded-full mx-auto mb-[20px]" />
 
-        <div className="relative flex items-center justify-center mb-[28px]">
+        <div className="flex items-center justify-center mb-[28px]">
           <h2 className="text-[17px] font-bold text-[#3C3C3C]">비밀번호 변경</h2>
-          <button onClick={handleClose} className="absolute right-0 text-[#B0B0B0]">
-            <X size={20} />
-          </button>
         </div>
 
         <div className="flex flex-col gap-[20px] mb-[28px]">

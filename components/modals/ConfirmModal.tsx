@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle, XCircle, X } from "lucide-react";
+import { CheckCircle, XCircle } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 type ModalType = "checkin" | "absent";
@@ -70,14 +70,6 @@ export default function ConfirmModal({
       >
         {/* 핸들 */}
         <div className="w-[40px] h-[4px] bg-[#D2D2D2] rounded-full mx-auto mb-[24px]" />
-
-        {/* 닫기 버튼 */}
-        <button
-          onClick={handleCancel}
-          className="absolute top-[24px] right-[25px] text-[#B0B0B0]"
-        >
-          <X size={20} />
-        </button>
 
         {/* 아이콘 + 텍스트 */}
         <div className="flex flex-col items-center gap-[12px] mb-[24px] mt-[12px]">

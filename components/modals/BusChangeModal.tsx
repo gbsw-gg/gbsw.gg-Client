@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, X, Bus } from "lucide-react";
+import { ArrowLeft, Bus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useBus, Bus as BusType } from "@/hooks/useBus";
 import { useToast } from "@/context/ToastContext";
@@ -140,9 +140,6 @@ export default function BusChangeModal({ onClose, onSuccess, scheduleType, curre
             </button>
           )}
           <h2 className="text-[17px] font-bold text-[#3C3C3C]">{STEP_TITLE[step]}</h2>
-          <button onClick={handleClose} className="absolute right-0 text-[#B0B0B0]">
-            <X size={20} />
-          </button>
         </div>
 
         {/* Step: 호차 선택 */}

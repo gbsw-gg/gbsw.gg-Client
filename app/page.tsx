@@ -35,7 +35,7 @@ export default function Home() {
   }
 
   return (
-    <div className="w-full max-w-125 mx-auto min-h-full flex flex-col items-center justify-center p-12.5">
+    <div className="w-full max-w-125 mx-auto min-h-screen flex flex-col items-center justify-center p-12.5">
       <Image src="/images/logo.png" alt="logo" width={100} height={100} priority />
       <p className="text-[20px] text-[#3c3c3c] font-bold mt-7.5">경소마고 귀가/귀교 버스 탑승 관리</p>
       <form onSubmit={handleLogin} className="w-full h-auto flex flex-col gap-10 mt-15">
@@ -52,7 +52,7 @@ export default function Home() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full h-10 bg-[#05A787] rounded-lg flex justify-center items-center text-[19px] text-white font-bold duration-200 hover:bg-[#03886E] disabled:opacity-60 cursor-pointer"
+          className="w-full h-10 bg-[#05A787] rounded-lg flex justify-center items-center text-[14px] text-white font-bold duration-200 hover:bg-[#03886E] disabled:opacity-60 cursor-pointer"
         >
           {loading ? '로그인 중...' : '로그인'}
         </button>
