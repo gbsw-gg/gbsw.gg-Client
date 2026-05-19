@@ -26,10 +26,10 @@ export default function StudentHeader({
         </p>
       </div>
       <div className="flex items-center gap-[14px]">
-        <button onClick={onChangePassword} className="w-6 h-6 flex justify-center items-center z-100">
+        <button onClick={onChangePassword} aria-label="비밀번호 변경" className="w-6 h-6 flex justify-center items-center z-100">
           <KeyRound size={18} color="white" />
         </button>
-        <button onClick={onLogout} className="w-6 h-6 flex justify-center items-center z-100">
+        <button onClick={onLogout} aria-label="로그아웃" className="w-6 h-6 flex justify-center items-center z-100">
           <LogOut size={18} color="white" />
         </button>
       </div>

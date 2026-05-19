@@ -29,9 +29,9 @@ const STATUS_LABEL: Record<MemberStatus, StudentStatus> = {
 };
 
 const STATUS_COLOR: Record<StudentStatus, string> = {
-  "사전 미탑승": "#F59E0B",
-  "탑승 완료": "#02AB87",
-  "미확인": "#B0B0B0",
+  "사전 미탑승": "#B45309",
+  "탑승 완료": "#027A65",
+  "미확인": "#767676",
 };
 
 export default function LeaderPage() {
@@ -194,11 +194,11 @@ export default function LeaderPage() {
                   </div>
                   <div>
                     <p className="text-[12px] font-medium text-[#474747]">탑승 완료</p>
-                    <p className="text-[22px] font-bold text-[#02AB87] mt-[2px]">{busStatus?.boarding ?? "-"}명</p>
+                    <p className="text-[22px] font-bold text-[#027A65] mt-[2px]">{busStatus?.boarding ?? "-"}명</p>
                   </div>
                   <div>
                     <p className="text-[12px] font-medium text-[#474747]">사전 미탑승</p>
-                    <p className="text-[22px] font-bold text-[#F59E0B] mt-[2px]">{busStatus?.preAbsent ?? "-"}명</p>
+                    <p className="text-[22px] font-bold text-[#B45309] mt-[2px]">{busStatus?.preAbsent ?? "-"}명</p>
                   </div>
                   <div>
                     <p className="text-[12px] font-medium text-[#474747]">미확인</p>
@@ -212,7 +212,7 @@ export default function LeaderPage() {
             <div className="mx-[25px] mt-[24px] mb-[30px]">
               <div className="flex justify-between items-center mb-[14px]">
                 <h2 className="text-[18px] font-bold text-[#3C3C3C]">학생 명단</h2>
-                <span className="text-[13px] font-medium text-[#B0B0B0]">{busStatus?.total ?? members.length}명</span>
+                <span className="text-[13px] font-medium text-[#767676]">{busStatus?.total ?? members.length}명</span>
               </div>
               <div className="bg-white rounded-[20px] shadow-[0_4px_10px_0_rgba(0,0,0,0.15)] overflow-hidden">
                 {members.map((member, index) => {
@@ -231,14 +231,14 @@ export default function LeaderPage() {
                     >
                       <div className="flex flex-col gap-[3px]">
                         <p className="text-[15px] font-bold text-[#3C3C3C]">{member.name}</p>
-                        <p className="text-[12px] font-medium text-[#B0B0B0]">
+                        <p className="text-[12px] font-medium text-[#767676]">
                           {member.grade}학년 {member.classNum}반
                         </p>
                       </div>
                       {member.phone && (
                         <button
                           onClick={copyPhone}
-                          className="text-[12px] font-medium text-[#888888] active:opacity-50 transition-opacity mx-[8px]"
+                          className="text-[12px] font-medium text-[#767676] active:opacity-50 transition-opacity mx-[8px]"
                         >
                           {member.phone}
                         </button>
