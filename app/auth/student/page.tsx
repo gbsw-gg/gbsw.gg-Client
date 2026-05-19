@@ -142,7 +142,7 @@ export default function StudentPage() {
 
   return (
     <>
-      <div className="min-h-full flex flex-col">
+      <div className="w-full max-w-[402px] mx-auto min-h-full flex flex-col">
         <div className="bg-[#05A787] pb-[80px]">
           <StudentHeader
             name={name}
