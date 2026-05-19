@@ -8,6 +8,7 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "경소마고 귀가/귀교",
+  description: "경북소프트웨어마이스터고등학교 귀가/귀교 버스 탑승 관리 서비스",
   icons: {
     icon: "/images/logo.png",
   },
