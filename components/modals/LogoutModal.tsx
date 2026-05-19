@@ -37,13 +37,13 @@ export default function LogoutModal({ onConfirm, onClose }: LogoutModalProps) {
   return createPortal(
     <>
       <div
-        className="absolute inset-0 z-40 bg-black/40 rounded-[30px] transition-opacity duration-300"
+        className="fixed inset-0 z-40 bg-black/40 transition-opacity duration-300"
         style={{ opacity: visible ? 1 : 0, pointerEvents: visible ? 'auto' : 'none' }}
         onClick={handleClose}
       />
 
       <div
-        className="absolute bottom-0 left-0 right-0 z-50 bg-white rounded-t-[28px] px-[25px] pt-[28px] pb-[60px] shadow-[0_-4px_20px_rgba(0,0,0,0.12)] transition-transform duration-300 ease-out"
+        className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-[28px] px-[25px] pt-[28px] pb-[60px] shadow-[0_-4px_20px_rgba(0,0,0,0.12)] transition-transform duration-300 ease-out"
         style={{ transform: `translateY(${visible ? "0%" : "100%"})` }}
       >
         <div className="w-[40px] h-[4px] bg-[#D2D2D2] rounded-full mx-auto mb-[20px]" />
