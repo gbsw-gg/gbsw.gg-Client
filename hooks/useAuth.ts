@@ -26,7 +26,6 @@ export function useAuth() {
       setTokens(res.data.accessToken, res.data.refreshToken);
       return res;
     } catch (error) {
-      showToast('로그인에 실패했습니다.', 'error');
       throw error;
     }
   };

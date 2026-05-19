@@ -13,9 +13,11 @@ export default function Home() {
   const [id, setId] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [loginError, setLoginError] = useState('');
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoginError('');
     setLoading(true);
     try {
       await login(id, password);
@@ -28,7 +30,7 @@ export default function Home() {
         router.push('/auth/student');
       }
     } catch {
-      // 에러 토스트는 useAuth 내부에서 처리
+      setLoginError('로그인 정보가 잘못되었습니다.');
     } finally {
       setLoading(false);
     }
@@ -48,6 +50,10 @@ export default function Home() {
           <label htmlFor="login-password" className="text-[10px] font-medium text-[#3c3c3c]">비밀번호</label>
           <input id="login-password" required value={password} onChange={e => setPassword(e.target.value)} type="password" className="w-full h-10 outline-none border-b border-[#d2d2d2] px-1 duration-200 focus:border-[#05A787] text-sm" />
         </div>
+
+        {loginError && (
+          <p className="text-[12px] text-[#EF4444] font-medium text-center mb-[-20px]">{loginError}</p>
+        )}
 
         <button
           type="submit"
