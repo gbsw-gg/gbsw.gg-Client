@@ -1,8 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useAttendance } from "@/hooks/useAttendance";
+import { useSchedule, Schedule, parseSchedule } from "@/hooks/useSchedule";
+import { useBus, BusMember, BusStatus, MemberStatus } from "@/hooks/useBus";
+import { useToast } from "@/context/ToastContext";
 import { useUser } from "@/context/UserContext";
 import { useRequireRole } from "@/hooks/useRequireRole";
 import StudentHeader from "@/components/StudentHeader";
@@ -11,17 +14,19 @@ import StatusCard from "@/components/StatusCard";
 import ActionButtons from "@/components/ActionButtons";
 import Notice from "@/components/Notice";
 import ConfirmModal from "@/components/modals/ConfirmModal";
+import PasswordChangeModal from "@/components/modals/PasswordChangeModal";
+import LogoutModal from "@/components/modals/LogoutModal";
 
 type StatusType = "미확인" | "탑승 완료" | "미탑승";
 type ModalType = "checkin" | "absent" | null;
+
 type StudentStatus = "사전 미탑승" | "탑승 완료" | "미확인";
 
-interface Student {
-  name: string;
-  grade: number;
-  classNum: number;
-  status: StudentStatus;
-}
+const STATUS_LABEL: Record<MemberStatus, StudentStatus> = {
+  BOARDING: "탑승 완료",
+  PRE_ABSENT: "사전 미탑승",
+  ABSENT: "미확인",
+};
 
 const STATUS_COLOR: Record<StudentStatus, string> = {
   "사전 미탑승": "#F59E0B",
@@ -29,56 +34,96 @@ const STATUS_COLOR: Record<StudentStatus, string> = {
   "미확인": "#B0B0B0",
 };
 
-const mockStudents: Student[] = [
-  { name: "이현석", grade: 3, classNum: 2, status: "사전 미탑승" },
-  { name: "김구현", grade: 3, classNum: 1, status: "탑승 완료" },
-  { name: "양선민", grade: 3, classNum: 2, status: "미확인" },
-  { name: "이현석", grade: 3, classNum: 2, status: "사전 미탑승" },
-  { name: "김구현", grade: 3, classNum: 1, status: "탑승 완료" },
-  { name: "양선민", grade: 3, classNum: 2, status: "미확인" },
-];
-
-// TODO: 활성 회차 API 연동 후 대체
-const MOCK_SCHEDULE = {
-  scheduleId: "schedule-1",
-  busNumber: "4호차",
-};
-
 export default function LeaderPage() {
   const { logout } = useAuth();
-  const { checkBoarding, requestAbsent } = useAttendance();
+  const { getMyBoarding, checkBoarding, requestAbsent } = useAttendance();
+  const { getSchedule } = useSchedule();
+  const { getMyBusMembers, getMyBusStatus } = useBus();
   const { user } = useUser();
+  const { showToast } = useToast();
   const { isChecking } = useRequireRole(['LEADER']);
 
   const name = user ? `${user.name} (도우미)` : "도우미";
   const grade = user?.grade ?? 0;
   const classNum = user?.classNum ?? 0;
-  const userId = String(user?.id ?? "");
+  const number = user?.studentId ? parseInt(user.studentId.slice(-2), 10) : undefined;
 
+  const [schedule, setSchedule] = useState<Schedule | null>(null);
   const [status, setStatus] = useState<StatusType>("미확인");
   const [timestamp, setTimestamp] = useState<string | undefined>(undefined);
   const [modal, setModal] = useState<ModalType>(null);
   const [absentReason, setAbsentReason] = useState<string | undefined>(undefined);
 
+  const [busLabel, setBusLabel] = useState<string>("-");
+  const [passwordChangeOpen, setPasswordChangeOpen] = useState(false);
+  const [logoutOpen, setLogoutOpen] = useState(false);
+  const [members, setMembers] = useState<BusMember[]>([]);
+  const [busStatus, setBusStatus] = useState<BusStatus | null>(null);
+  const [loaded, setLoaded] = useState(false);
+
   const isConfirmed = status === "탑승 완료" || status === "미탑승";
   const showDashboard = status === "탑승 완료";
 
-  const formatTimestamp = () => {
-    const now = new Date();
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")} ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+  const formatTime = (iso: string) => {
+    const d = new Date(iso);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
   };
 
+  useEffect(() => {
+    if (isChecking) return;
+    const init = async () => {
+      const [s, boarding, myStatus] = await Promise.all([
+        getSchedule(),
+        getMyBoarding(),
+        getMyBusStatus(),
+      ]);
+      setSchedule(s);
+      if (myStatus) {
+        setBusLabel(`${myStatus.busNumber}호차`);
+        setBusStatus(myStatus);
+      }
+
+      if (boarding) {
+        if (boarding.status === 'BOARDING') {
+          setStatus("탑승 완료");
+          setTimestamp(formatTime(boarding.checkTime));
+        } else if (boarding.status === 'PRE_ABSENT') {
+          setStatus("미탑승");
+          setTimestamp(formatTime(boarding.checkTime));
+          setAbsentReason(boarding.reason);
+        }
+      }
+      setLoaded(true);
+    };
+    init();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isChecking]);
+
+  // 탑승 완료 후 대시보드 진입 시 버스 데이터 로드
+  useEffect(() => {
+    if (!showDashboard) return;
+    const loadBusData = async () => {
+      const [m, s] = await Promise.all([getMyBusMembers(), getMyBusStatus()]);
+      setMembers(m);
+      setBusStatus(s);
+    };
+    loadBusData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showDashboard]);
+
   const handleConfirm = async (reason?: string) => {
+    if (!schedule) return;
     try {
       if (modal === "checkin") {
-        await checkBoarding(userId, MOCK_SCHEDULE.busNumber, MOCK_SCHEDULE.scheduleId);
+        await checkBoarding(schedule.id);
         setStatus("탑승 완료");
+        setTimestamp(formatTime(new Date().toISOString()));
       } else if (modal === "absent") {
-        await requestAbsent(userId, MOCK_SCHEDULE.busNumber, MOCK_SCHEDULE.scheduleId, reason ?? "");
+        await requestAbsent(schedule.id, reason ?? "");
         setStatus("미탑승");
         setAbsentReason(reason);
+        setTimestamp(formatTime(new Date().toISOString()));
       }
-      setTimestamp(formatTimestamp());
     } catch {
       // 에러 토스트는 useAttendance 내부에서 처리
     } finally {
@@ -86,10 +131,7 @@ export default function LeaderPage() {
     }
   };
 
-  const total = mockStudents.length;
-  const boarded = mockStudents.filter((s) => s.status === "탑승 완료").length;
-  const absentCount = mockStudents.filter((s) => s.status === "사전 미탑승").length;
-  const unchecked = mockStudents.filter((s) => s.status === "미확인").length;
+  const parsed = schedule ? parseSchedule(schedule) : null;
 
   if (isChecking) return null;
 
@@ -99,21 +141,31 @@ export default function LeaderPage() {
         /* ── Phase 1: 본인 탑승 체크 ── */
         <div className="min-h-full flex flex-col">
           <div className="bg-[#05A787] pb-[80px]">
-            <StudentHeader name={name} grade={grade} classNum={classNum} number={0} onLogout={logout} />
+            <StudentHeader name={name} grade={grade} classNum={classNum} number={number} onLogout={() => setLogoutOpen(true)} onChangePassword={() => setPasswordChangeOpen(true)} />
           </div>
           <div className="flex flex-col mt-[-60px]">
-            <BusInfoCard
-              busNumber="4호차"
-              week="2026년 3월 2주차 귀가"
-              departureDate="2026-03-20"
-              departureTime="14:30"
-            />
-            <StatusCard status={status} timestamp={timestamp} reason={absentReason} />
-            {!isConfirmed && (
-              <ActionButtons
-                onCheckIn={() => setModal("checkin")}
-                onAbsent={() => setModal("absent")}
-              />
+            {loaded && !schedule ? (
+              <div className="mx-[25px] mt-[20px] bg-white rounded-[20px] shadow-[0_4px_10px_0_rgba(0,0,0,0.08)] px-[24px] py-[32px] flex flex-col items-center gap-[10px]">
+                <p className="text-[28px]">🚌</p>
+                <p className="text-[16px] font-bold text-[#3C3C3C]">지금은 버스 탑승 시간이 아닙니다</p>
+                <p className="text-[13px] text-[#888888] text-center">현재 활성화된 버스 회차가 없습니다.<br />탑승 시간에 다시 확인해 주세요.</p>
+              </div>
+            ) : (
+              <>
+                <BusInfoCard
+                  busNumber={busLabel}
+                  week={schedule ? `${schedule.name} (${parsed?.typeLabel})` : "-"}
+                  departureDate={parsed?.date ?? "-"}
+                  departureTime={parsed?.time ?? "-"}
+                />
+                <StatusCard status={status} timestamp={timestamp} reason={absentReason} />
+                {!isConfirmed && (
+                  <ActionButtons
+                    onCheckIn={() => setModal("checkin")}
+                    onAbsent={() => setModal("absent")}
+                  />
+                )}
+              </>
             )}
             <Notice />
           </div>
@@ -122,7 +174,7 @@ export default function LeaderPage() {
         /* ── Phase 2: 도우미 대시보드 ── */
         <div className="min-h-full flex flex-col">
           <div className="bg-[#05A787] pb-[80px]">
-            <StudentHeader name={name} grade={grade} classNum={classNum} number={0} onLogout={logout} />
+            <StudentHeader name={name} grade={grade} classNum={classNum} number={number} onLogout={() => setLogoutOpen(true)} onChangePassword={() => setPasswordChangeOpen(true)} />
           </div>
 
           <div className="flex flex-col mt-[-60px]">
@@ -131,24 +183,26 @@ export default function LeaderPage() {
               <div className="mx-[25px] py-[20px]">
                 <div className="pb-[12px] border-b border-[#D2D2D2]">
                   <p className="text-[12px] font-medium text-[#474747]">담당 버스</p>
-                  <h2 className="text-[24px] font-bold text-[#3C3C3C] mt-[2px]">4호차</h2>
+                  <h2 className="text-[24px] font-bold text-[#3C3C3C] mt-[2px]">
+                    {busStatus ? `${busStatus.busNumber}호차` : "-"}
+                  </h2>
                 </div>
                 <div className="grid grid-cols-2 gap-y-[18px] mt-[16px]">
                   <div>
                     <p className="text-[12px] font-medium text-[#474747]">전체 인원</p>
-                    <p className="text-[22px] font-bold text-[#3C3C3C] mt-[2px]">{total}명</p>
+                    <p className="text-[22px] font-bold text-[#3C3C3C] mt-[2px]">{busStatus?.total ?? "-"}명</p>
                   </div>
                   <div>
                     <p className="text-[12px] font-medium text-[#474747]">탑승 완료</p>
-                    <p className="text-[22px] font-bold text-[#02AB87] mt-[2px]">{boarded}명</p>
+                    <p className="text-[22px] font-bold text-[#02AB87] mt-[2px]">{busStatus?.boarding ?? "-"}명</p>
                   </div>
                   <div>
                     <p className="text-[12px] font-medium text-[#474747]">사전 미탑승</p>
-                    <p className="text-[22px] font-bold text-[#F59E0B] mt-[2px]">{absentCount}명</p>
+                    <p className="text-[22px] font-bold text-[#F59E0B] mt-[2px]">{busStatus?.preAbsent ?? "-"}명</p>
                   </div>
                   <div>
                     <p className="text-[12px] font-medium text-[#474747]">미확인</p>
-                    <p className="text-[22px] font-bold text-[#EF4444] mt-[2px]">{unchecked}명</p>
+                    <p className="text-[22px] font-bold text-[#EF4444] mt-[2px]">{busStatus?.absent ?? "-"}명</p>
                   </div>
                 </div>
               </div>
@@ -158,32 +212,43 @@ export default function LeaderPage() {
             <div className="mx-[25px] mt-[24px] mb-[30px]">
               <div className="flex justify-between items-center mb-[14px]">
                 <h2 className="text-[18px] font-bold text-[#3C3C3C]">학생 명단</h2>
-                <span className="text-[13px] font-medium text-[#B0B0B0]">{total}명</span>
+                <span className="text-[13px] font-medium text-[#B0B0B0]">{busStatus?.total ?? members.length}명</span>
               </div>
               <div className="bg-white rounded-[20px] shadow-[0_4px_10px_0_rgba(0,0,0,0.15)] overflow-hidden">
-                {mockStudents.map((student, index) => (
-                  <div
-                    key={index}
-                    className={`px-[20px] py-[16px] flex justify-between items-center ${
-                      index !== mockStudents.length - 1
-                        ? "border-b border-[#F0F0F0]"
-                        : ""
-                    }`}
-                  >
-                    <div className="flex flex-col gap-[3px]">
-                      <p className="text-[15px] font-bold text-[#3C3C3C]">{student.name}</p>
-                      <p className="text-[12px] font-medium text-[#B0B0B0]">
-                        {student.grade}학년 {student.classNum}반
+                {members.map((member, index) => {
+                  const label = STATUS_LABEL[member.status];
+                  const copyPhone = async () => {
+                    if (!member.phone) return;
+                    await navigator.clipboard.writeText(member.phone);
+                    showToast('복사되었습니다.', 'success');
+                  };
+                  return (
+                    <div
+                      key={member.studentId}
+                      className={`px-[20px] py-[16px] flex justify-between items-center ${
+                        index !== members.length - 1 ? "border-b border-[#F0F0F0]" : ""
+                      }`}
+                    >
+                      <div className="flex flex-col gap-[3px]">
+                        <p className="text-[15px] font-bold text-[#3C3C3C]">{member.name}</p>
+                        <p className="text-[12px] font-medium text-[#B0B0B0]">
+                          {member.grade}학년 {member.classNum}반
+                        </p>
+                      </div>
+                      {member.phone && (
+                        <button
+                          onClick={copyPhone}
+                          className="text-[12px] font-medium text-[#888888] active:opacity-50 transition-opacity mx-[8px]"
+                        >
+                          {member.phone}
+                        </button>
+                      )}
+                      <p className="text-[13px] font-semibold" style={{ color: STATUS_COLOR[label] }}>
+                        {label}
                       </p>
                     </div>
-                    <p
-                      className="text-[13px] font-semibold"
-                      style={{ color: STATUS_COLOR[student.status] }}
-                    >
-                      {student.status}
-                    </p>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -195,6 +260,17 @@ export default function LeaderPage() {
           type={modal}
           onConfirm={handleConfirm}
           onCancel={() => setModal(null)}
+        />
+      )}
+
+      {passwordChangeOpen && (
+        <PasswordChangeModal onClose={() => setPasswordChangeOpen(false)} />
+      )}
+
+      {logoutOpen && (
+        <LogoutModal
+          onConfirm={logout}
+          onClose={() => setLogoutOpen(false)}
         />
       )}
     </>
