@@ -140,7 +140,7 @@ export default function LeaderPage() {
       {!showDashboard ? (
         /* ── Phase 1: 본인 탑승 체크 ── */
         <div className="min-h-full flex flex-col">
-          <div className="bg-[#05A787] pb-[80px]">
+          <div className="relative z-10 bg-[#05A787] pb-[80px]">
             <StudentHeader name={name} grade={grade} classNum={classNum} number={number} onLogout={() => setLogoutOpen(true)} onChangePassword={() => setPasswordChangeOpen(true)} />
           </div>
           <div className="flex flex-col mt-[-60px]">
@@ -173,7 +173,7 @@ export default function LeaderPage() {
       ) : (
         /* ── Phase 2: 도우미 대시보드 ── */
         <div className="min-h-full flex flex-col">
-          <div className="bg-[#05A787] pb-[80px]">
+          <div className="relative z-10 bg-[#05A787] pb-[80px]">
             <StudentHeader name={name} grade={grade} classNum={classNum} number={number} onLogout={() => setLogoutOpen(true)} onChangePassword={() => setPasswordChangeOpen(true)} />
           </div>
 
@@ -190,19 +190,19 @@ export default function LeaderPage() {
                 <div className="grid grid-cols-2 gap-y-[18px] mt-[16px]">
                   <div>
                     <p className="text-[12px] font-medium text-[#474747]">전체 인원</p>
-                    <p className="text-[22px] font-bold text-[#3C3C3C] mt-[2px]">{members.length || (busStatus?.total ?? "-")}명</p>
+                    <p className="text-[22px] font-bold text-[#3C3C3C] mt-[2px]">{busStatus?.total ?? "-"}명</p>
                   </div>
                   <div>
                     <p className="text-[12px] font-medium text-[#474747]">탑승 완료</p>
-                    <p className="text-[22px] font-bold text-[#02AB87] mt-[2px]">{members.filter(m => m.status === 'BOARDING').length}명</p>
+                    <p className="text-[22px] font-bold text-[#02AB87] mt-[2px]">{busStatus?.boarding ?? "-"}명</p>
                   </div>
                   <div>
                     <p className="text-[12px] font-medium text-[#474747]">사전 미탑승</p>
-                    <p className="text-[22px] font-bold text-[#F59E0B] mt-[2px]">{members.filter(m => m.status === 'PRE_ABSENT').length}명</p>
+                    <p className="text-[22px] font-bold text-[#F59E0B] mt-[2px]">{busStatus?.preAbsent ?? "-"}명</p>
                   </div>
                   <div>
                     <p className="text-[12px] font-medium text-[#474747]">미확인</p>
-                    <p className="text-[22px] font-bold text-[#EF4444] mt-[2px]">{members.filter(m => m.status === 'ABSENT').length}명</p>
+                    <p className="text-[22px] font-bold text-[#EF4444] mt-[2px]">{busStatus ? busStatus.total - busStatus.boarding - busStatus.preAbsent : "-"}명</p>
                   </div>
                 </div>
               </div>

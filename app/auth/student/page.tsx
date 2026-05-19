@@ -143,7 +143,7 @@ export default function StudentPage() {
   return (
     <>
       <div className="w-full max-w-[402px] mx-auto min-h-full flex flex-col">
-        <div className="bg-[#05A787] pb-[80px]">
+        <div className="relative z-10 bg-[#05A787] pb-[80px]">
           <StudentHeader
             name={name}
             grade={grade}
