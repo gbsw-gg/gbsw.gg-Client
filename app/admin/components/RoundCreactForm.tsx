@@ -54,8 +54,8 @@ export default function RoundCreateForm({ onClose, onSuccess }: Props) {
   };
 
   return (
-    <div className={`absolute inset-0 z-50 flex flex-col justify-end transition-colors duration-300 ${visible ? 'bg-black/40' : 'bg-transparent'}`} onClick={close}>
-      <form onSubmit={handleSubmit} onClick={e => e.stopPropagation()} className={`w-full h-auto bg-white rounded-t-[30px] p-7.5 flex flex-col gap-7.5 transition-transform duration-300 ease-out ${visible ? 'translate-y-0' : 'translate-y-full'}`}>
+    <div className={`fixed inset-0 z-50 flex flex-col justify-end transition-colors duration-300 ${visible ? 'bg-black/40' : 'bg-transparent'}`} onClick={close}>
+      <form onSubmit={handleSubmit} onClick={e => e.stopPropagation()} className={`w-full max-w-[402px] mx-auto h-auto bg-white rounded-t-[30px] p-7.5 flex flex-col gap-7.5 transition-transform duration-300 ease-out ${visible ? 'translate-y-0' : 'translate-y-full'}`}>
         <p className="text-[20px] text-[#3c3c3c] font-bold">회차 생성</p>
 
         <div className="w-full h-auto flex flex-col gap-1">
