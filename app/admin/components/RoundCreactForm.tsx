@@ -39,9 +39,9 @@ export default function RoundCreateForm({ onClose, onSuccess }: Props) {
       const res = await api.post<ApiResponse>('/api/schedules', {
         name,
         type,
-        departAt: new Date(`${departDate}T${departTime}:00`).toISOString(),
-        checkDeadline: new Date(`${deadlineDate}T${deadlineTime}:00`).toISOString(),
-        preAbsentDeadline: new Date(`${preAbsentDate}T${preAbsentTime}:00`).toISOString(),
+        departAt: `${departDate}T${departTime}:00.000Z`,
+        checkDeadline: `${deadlineDate}T${deadlineTime}:00.000Z`,
+        preAbsentDeadline: `${preAbsentDate}T${preAbsentTime}:00.000Z`,
         semester,
       });
       if (!res.success) throw new Error(res.message);

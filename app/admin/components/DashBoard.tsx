@@ -4,15 +4,6 @@ import { useEffect, useState } from "react";
 import { ChevronRight } from "lucide-react";
 import api, { ApiResponse } from "@/lib/api";
 
-const formatDateTime = (iso: string) => {
-  const d = new Date(iso);
-  const yyyy = d.getFullYear();
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  const dd = String(d.getDate()).padStart(2, '0');
-  const hh = String(d.getHours()).padStart(2, '0');
-  const min = String(d.getMinutes()).padStart(2, '0');
-  return `${yyyy}-${mm}-${dd} ${hh}:${min}`;
-};
 
 interface BusSummary {
   busNumber: number;
@@ -62,7 +53,7 @@ export default function DashBoard({ onSelectBus }: Props) {
           <>
             <p className="text-[14px] text-[#747474] font-medium mt-4">{data.schedule.name}</p>
             <p className="text-[14px] text-[#747474] font-medium">
-              출발: {formatDateTime(data.schedule.departAt)}
+              출발: {data.schedule.departAt.replace('T', ' ').slice(0, 16)}
             </p>
           </>
         )}

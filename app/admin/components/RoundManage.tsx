@@ -18,15 +18,6 @@ const TYPE_LABEL: Record<string, string> = {
   INBOUND: '귀교',
 };
 
-const formatDateTime = (iso: string) => {
-  const d = new Date(iso);
-  const yyyy = d.getFullYear();
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  const dd = String(d.getDate()).padStart(2, '0');
-  const hh = String(d.getHours()).padStart(2, '0');
-  const min = String(d.getMinutes()).padStart(2, '0');
-  return `${yyyy}-${mm}-${dd} ${hh}:${min}`;
-};
 
 export default function RoundManage() {
   const [rounds, setRounds] = useState<Schedule[]>([]);
@@ -75,7 +66,7 @@ export default function RoundManage() {
           key={round.id}
           title={round.name}
           type={TYPE_LABEL[round.type]}
-          startTime={`출발: ${formatDateTime(round.departAt)}`}
+          startTime={`출발: ${round.departAt.replace('T', ' ').slice(0, 16)}`}
           active={round.isActive}
           onToggle={() => handleToggle(round.id, round.isActive)}
           onDelete={() => handleDelete(round.id)}
