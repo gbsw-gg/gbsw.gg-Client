@@ -23,7 +23,7 @@ export default function Admin() {
   if (isChecking) return null;
 
   return (
-    <div className="w-full h-full flex flex-col">
+    <div className="w-full h-screen flex flex-col">
       <Header selected={selected} onSelect={handleSelectMenu} />
       <div className="flex-1 overflow-y-auto">
         {selected === "dashboard" && !selectedBus && (

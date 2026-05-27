@@ -1,8 +1,7 @@
 "use client";
 
-import { CheckCircle, XCircle, X } from "lucide-react";
+import { CheckCircle, XCircle } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
 
 type ModalType = "checkin" | "absent";
 
@@ -36,17 +35,12 @@ export default function ConfirmModal({
 }: ConfirmModalProps) {
   const config = modalConfig[type];
   const [visible, setVisible] = useState(false);
-  const [wrapper, setWrapper] = useState<Element | null>(null);
   const [reason, setReason] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    const wrapperTimer = setTimeout(() => setWrapper(document.querySelector(".wrapper")), 0);
-    const visibleTimer = setTimeout(() => setVisible(true), 10);
-    return () => {
-      clearTimeout(wrapperTimer);
-      clearTimeout(visibleTimer);
-    };
+    const timer = setTimeout(() => setVisible(true), 10);
+    return () => clearTimeout(timer);
   }, []);
 
   const handleCancel = () => {
@@ -60,32 +54,22 @@ export default function ConfirmModal({
     setTimeout(() => onConfirm(type === "absent" ? reason.trim() : undefined), 300);
   };
 
-  if (!wrapper) return null;
-
-  return createPortal(
+  return (
     <>
-      {/* 딤 배경 — wrapper 기준 inset-0 */}
+      {/* 딤 배경 */}
       <div
-        className="absolute inset-0 z-40 bg-black/40 rounded-[30px] transition-opacity duration-300"
-        style={{ opacity: visible ? 1 : 0 }}
+        className="fixed inset-0 z-40 bg-black/40 transition-opacity duration-300"
+        style={{ opacity: visible ? 1 : 0, pointerEvents: visible ? 'auto' : 'none' }}
         onClick={handleCancel}
       />
 
       {/* 바텀시트 — wrapper 하단 기준 */}
       <div
-        className="absolute bottom-0 left-0 right-0 z-50 bg-white rounded-t-[28px] px-[25px] pt-[28px] pb-[60px] shadow-[0_-4px_20px_rgba(0,0,0,0.12)] transition-transform duration-300 ease-out"
-        style={{ transform: `translateY(${visible ? "0%" : "100%"})` }}
+        className="fixed bottom-0 left-1/2 w-full max-w-[402px] z-50 bg-white rounded-t-[28px] px-[25px] pt-[28px] pb-[60px] shadow-[0_-4px_20px_rgba(0,0,0,0.12)] transition-transform duration-300 ease-out"
+        style={{ transform: `translateX(-50%) translateY(${visible ? "0%" : "100%"})` }}
       >
         {/* 핸들 */}
         <div className="w-[40px] h-[4px] bg-[#D2D2D2] rounded-full mx-auto mb-[24px]" />
-
-        {/* 닫기 버튼 */}
-        <button
-          onClick={handleCancel}
-          className="absolute top-[24px] right-[25px] text-[#B0B0B0]"
-        >
-          <X size={20} />
-        </button>
 
         {/* 아이콘 + 텍스트 */}
         <div className="flex flex-col items-center gap-[12px] mb-[24px] mt-[12px]">
@@ -105,6 +89,7 @@ export default function ConfirmModal({
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             placeholder="사유를 입력하세요"
+            aria-label="미탑승 사유"
             className="w-full h-[100px] bg-[#F7F7F7] rounded-[14px] px-[16px] py-[14px] text-[14px] text-[#3C3C3C] font-medium placeholder:text-[#B0B0B0] resize-none outline-none mb-[16px]"
           />
         )}
@@ -126,7 +111,6 @@ export default function ConfirmModal({
           </button>
         </div>
       </div>
-    </>,
-    wrapper,
+    </>
   );
 }

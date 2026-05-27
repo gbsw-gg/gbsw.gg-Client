@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { ChevronLeft, Pencil, Check, X } from 'lucide-react';
 import api, { ApiResponse } from '@/lib/api';
+import { useToast } from '@/context/ToastContext';
 
 interface Props {
   busId: number;
@@ -11,10 +12,21 @@ interface Props {
 }
 
 interface StudentRecord {
-  busNumber: number;
+  studentId: number;
   studentName: string;
   grade: number;
   classNum: number;
+  phone?: string;
+  status: 'BOARDING' | 'PRE_ABSENT' | 'ABSENT';
+  reason: string | null;
+}
+
+interface BusMemberApi {
+  studentId: number;
+  name: string;
+  grade: number;
+  classNum: number;
+  phone?: string;
   status: 'BOARDING' | 'PRE_ABSENT' | 'ABSENT';
   reason: string | null;
 }
@@ -38,6 +50,7 @@ const STATUS_COLOR: Record<string, string> = {
 };
 
 export default function BusDetail({ busId, leaderName: initialLeaderName, onBack }: Props) {
+  const { showToast } = useToast();
   const [students, setStudents] = useState<StudentRecord[]>([]);
   const [busDbId, setBusDbId] = useState<number | null>(null);
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
@@ -55,13 +68,33 @@ export default function BusDetail({ busId, leaderName: initialLeaderName, onBack
         }
       })
       .catch(() => {});
+  }, [busId]);
 
-    api.get<ApiResponse<StudentRecord[]>>('/api/admin/records')
+  useEffect(() => {
+    if (!busDbId) return;
+    api.get<ApiResponse<BusMemberApi[]>>(`/api/buses/${busDbId}/members`)
       .then(res => {
-        if (res.success) setStudents(res.data.filter(r => r.busNumber === busId));
+        if (!res.success) return;
+        setStudents(
+          res.data.map(m => ({
+            studentId: m.studentId,
+            studentName: m.name,
+            grade: m.grade,
+            classNum: m.classNum,
+            phone: m.phone,
+            status: m.status,
+            reason: m.reason,
+          }))
+        );
       })
       .catch(() => {});
-  }, [busId]);
+  }, [busDbId]);
+
+  const copyPhone = async (phone?: string) => {
+    if (!phone) return;
+    await navigator.clipboard.writeText(phone);
+    showToast('복사되었습니다.', 'success');
+  };
 
   const handleLeaderSave = async () => {
     if (!busDbId || !studentNumber.trim()) return;
@@ -164,7 +197,7 @@ export default function BusDetail({ busId, leaderName: initialLeaderName, onBack
           const isExpanded = expandedIndex === i;
           return (
             <div
-              key={i}
+              key={s.studentId}
               onClick={() => isPreAbsent ? setExpandedIndex(isExpanded ? null : i) : undefined}
               className={`w-full flex flex-col py-3 px-4 rounded-xl bg-white shadow-sm ${isPreAbsent ? 'cursor-pointer' : ''}`}
             >
@@ -173,6 +206,14 @@ export default function BusDetail({ busId, leaderName: initialLeaderName, onBack
                   <p className="text-[14px] font-bold text-[#3c3c3c]">{s.studentName}</p>
                   <p className="text-[12px] font-medium text-[#3c3c3c]">{s.grade}학년 {s.classNum}반</p>
                 </div>
+                {s.phone && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); copyPhone(s.phone); }}
+                    className="text-[12px] font-medium text-[#747474] active:opacity-50 transition-opacity mx-2"
+                  >
+                    {s.phone}
+                  </button>
+                )}
                 <p className={`text-[12px] font-bold ${STATUS_COLOR[label]}`}>{label}</p>
               </div>
               {isPreAbsent && isExpanded && (

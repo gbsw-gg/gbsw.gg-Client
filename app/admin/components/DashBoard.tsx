@@ -10,12 +10,11 @@ interface BusSummary {
   total: number;
   boarding: number;
   preAbsent: number;
-  absent: number;
 }
 
 interface DashboardData {
   schedule: { id: number; name: string; departAt: string } | null;
-  total: { all: number; boarding: number; preAbsent: number; absent: number };
+  total: { all: number; boarding: number; preAbsent: number };
   buses: BusSummary[];
 }
 
@@ -78,7 +77,9 @@ export default function DashBoard({ onSelectBus }: Props) {
           </div>
           <div className="w-[50%] h-auto flex flex-col justify-between">
             <p className="text-[12px] font-medium text-[#EF4444]">미확인</p>
-            <p className="text-[24px] font-bold text-black">{total?.absent ?? 0}명</p>
+            <p className="text-[24px] font-bold text-black">
+              {total ? total.all - total.boarding - total.preAbsent : 0}명
+            </p>
           </div>
         </div>
       </div>
@@ -100,7 +101,7 @@ export default function DashBoard({ onSelectBus }: Props) {
               {[
                 { label: '전체', value: bus.total },
                 { label: '사전 미탑승', value: bus.preAbsent },
-                { label: '미확인', value: bus.absent },
+                { label: '미확인', value: bus.total - bus.boarding - bus.preAbsent },
                 { label: '탑승 완료', value: bus.boarding },
               ].map((item) => (
                 <div key={item.label} className="w-auto h-auto flex flex-col items-center">

@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Icons } from "@/icons";
 import Image from "next/image";
 import { useAuth } from "@/hooks/useAuth";
 import { useUser } from "@/context/UserContext";
@@ -14,9 +13,11 @@ export default function Home() {
   const [id, setId] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [loginError, setLoginError] = useState('');
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoginError('');
     setLoading(true);
     try {
       await login(id, password);
@@ -29,31 +30,35 @@ export default function Home() {
         router.push('/auth/student');
       }
     } catch {
-      // 에러 토스트는 useAuth 내부에서 처리
+      setLoginError('로그인 정보가 잘못되었습니다.');
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="max-w-125 min-h-full flex flex-col items-center justify-center p-12.5">
-      <Image src={Icons.Logo} alt="logo" width={100}/>
+    <div className="w-full max-w-125 mx-auto h-dvh flex flex-col items-center justify-center p-12.5">
+      <Image src="/images/logo.png" alt="logo" width={100} height={100} priority />
       <p className="text-[20px] text-[#3c3c3c] font-bold mt-7.5">경소마고 귀가/귀교 버스 탑승 관리</p>
       <form onSubmit={handleLogin} className="w-full h-auto flex flex-col gap-10 mt-15">
         <div className="w-full h-auto flex flex-col justify-between">
-          <p className="text-[10px] font-medium text-[#3c3c3c]">아이디</p>
-          <input required value={id} onChange={e => setId(e.target.value)} type="text" className="w-full h-10 outline-none border-b border-[#d2d2d2] px-1 duration-200 focus:border-[#05A787] text-sm" />
+          <label htmlFor="login-id" className="text-[10px] font-medium text-[#3c3c3c]">아이디</label>
+          <input id="login-id" required value={id} onChange={e => setId(e.target.value)} type="text" className="w-full h-10 outline-none border-b border-[#d2d2d2] px-1 duration-200 focus:border-[#05A787] text-sm" />
         </div>
 
         <div className="w-full h-auto flex flex-col justify-between">
-          <p className="text-[10px] font-medium text-[#3c3c3c]">비밀번호</p>
-          <input required value={password} onChange={e => setPassword(e.target.value)} type="password" className="w-full h-10 outline-none border-b border-[#d2d2d2] px-1 duration-200 focus:border-[#05A787] text-sm" />
+          <label htmlFor="login-password" className="text-[10px] font-medium text-[#3c3c3c]">비밀번호</label>
+          <input id="login-password" required value={password} onChange={e => setPassword(e.target.value)} type="password" className="w-full h-10 outline-none border-b border-[#d2d2d2] px-1 duration-200 focus:border-[#05A787] text-sm" />
         </div>
+
+        {loginError && (
+          <p className="text-[12px] text-[#EF4444] font-medium text-center mb-[-20px]">{loginError}</p>
+        )}
 
         <button
           type="submit"
           disabled={loading}
-          className="w-full h-10 bg-[#05A787] rounded-lg flex justify-center items-center text-[12px] text-white font-bold duration-200 hover:bg-[#03886E] disabled:opacity-60 cursor-pointer"
+          className="w-full h-10 bg-[#05A787] rounded-lg flex justify-center items-center text-[14px] text-white font-bold duration-200 hover:bg-[#03886E] disabled:opacity-60 cursor-pointer"
         >
           {loading ? '로그인 중...' : '로그인'}
         </button>
