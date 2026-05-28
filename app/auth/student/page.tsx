@@ -19,7 +19,7 @@ import PasswordChangeModal from "@/components/modals/PasswordChangeModal";
 import LogoutModal from "@/components/modals/LogoutModal";
 
 type StatusType = "미확인" | "탑승 완료" | "미탑승";
-type ModalType = "checkin" | "absent" | null;
+type ModalType = "checkin" | "absent" | "cancelAbsent" | null;
 
 const REQUEST_STATUS_LABEL: Record<string, string> = {
   PENDING: "대기 중",
@@ -38,7 +38,7 @@ const TYPE_LABEL: Record<string, string> = {
 
 export default function StudentPage() {
   const { logout } = useAuth();
-  const { getMyBoarding, checkBoarding, requestAbsent } = useAttendance();
+  const { getMyBoarding, checkBoarding, requestAbsent, cancelAbsent } = useAttendance();
   const { getSchedule } = useSchedule();
   const { getMyBusStatus } = useBus();
   const { getMyRequests, cancelRequest } = useBusChangeRequest();
@@ -128,6 +128,11 @@ export default function StudentPage() {
         setStatus("미탑승");
         setAbsentReason(reason);
         setTimestamp(formatTime(new Date().toISOString()));
+      } else if (modal === "cancelAbsent") {
+        await cancelAbsent(schedule.id);
+        setStatus("미확인");
+        setAbsentReason(undefined);
+        setTimestamp(undefined);
       }
     } catch {
       // 에러 토스트는 useAttendance 내부에서 처리
@@ -178,6 +183,16 @@ export default function StudentPage() {
                   onAbsent={() => setModal("absent")}
                   absentExpired={schedule ? new Date() > new Date(schedule.preAbsentDeadline) : false}
                 />
+              )}
+              {status === "미탑승" && (
+                <div className="mx-[25px] mt-[20px]">
+                  <button
+                    onClick={() => setModal("cancelAbsent")}
+                    className="w-full h-[56px] bg-[#F59E0B] rounded-[14px] flex items-center justify-center gap-[8px] active:opacity-80 transition-opacity"
+                  >
+                    <span className="text-white font-semibold text-[16px]">미탑승 취소하기</span>
+                  </button>
+                </div>
               )}
 
               {/* 호차 변경 신청 내역 */}

@@ -1,9 +1,9 @@
 "use client";
 
-import { CheckCircle, XCircle } from "lucide-react";
+import { CheckCircle, XCircle, RotateCcw } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
-type ModalType = "checkin" | "absent";
+type ModalType = "checkin" | "absent" | "cancelAbsent";
 
 interface ConfirmModalProps {
   type: ModalType;
@@ -25,6 +25,13 @@ const modalConfig = {
     description: "미탑승 사유를 입력해 주세요.",
     confirmLabel: "신청하기",
     confirmColor: "bg-[#EF4444]",
+  },
+  cancelAbsent: {
+    icon: <RotateCcw size={36} color="#F59E0B" />,
+    title: "미탑승 취소하기",
+    description: "진짜 취소하시겠습니까?",
+    confirmLabel: "취소하기",
+    confirmColor: "bg-[#F59E0B]",
   },
 };
 
@@ -53,6 +60,8 @@ export default function ConfirmModal({
     setVisible(false);
     setTimeout(() => onConfirm(type === "absent" ? reason.trim() : undefined), 300);
   };
+
+  const isDisabled = type === "absent" && reason.trim() === "";
 
   return (
     <>
@@ -98,7 +107,7 @@ export default function ConfirmModal({
         <div className="flex flex-col gap-[10px]">
           <button
             onClick={handleConfirm}
-            disabled={type === "absent" && reason.trim() === ""}
+            disabled={isDisabled}
             className={`w-full h-[56px] ${config.confirmColor} rounded-[14px] text-white font-semibold text-[16px] transition-opacity disabled:opacity-40 active:enabled:opacity-80`}
           >
             {config.confirmLabel}

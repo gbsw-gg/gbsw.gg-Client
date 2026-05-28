@@ -61,5 +61,19 @@ export function useAttendance() {
     }
   };
 
-  return { getMyBoarding, checkBoarding, requestAbsent };
+  /** 사전 미탑승 취소 */
+  const cancelAbsent = async (scheduleId: number) => {
+    try {
+      const res = await api.delete<ApiResponse>('/api/boarding/pre-absent', { data: { scheduleId } });
+      if (!res.success) throw new Error(res.message);
+      showToast('미탑승 신청이 취소되었습니다.', 'success');
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : '미탑승 취소에 실패했습니다.';
+      showToast(message, 'error');
+      throw error;
+    }
+  };
+
+  return { getMyBoarding, checkBoarding, requestAbsent, cancelAbsent };
 }
