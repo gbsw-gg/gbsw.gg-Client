@@ -13,8 +13,8 @@ export default function RoundCreateForm({ onClose, onSuccess }: Props) {
   const [name, setName] = useState('');
   const [departDate, setDepartDate] = useState('');
   const [departTime, setDepartTime] = useState('');
-  const [deadlineDate, setDeadlineDate] = useState('');
-  const [deadlineTime, setDeadlineTime] = useState('');
+  const [checkStartDate, setCheckStartDate] = useState('');
+  const [checkStartTime, setCheckStartTime] = useState('');
   const [preAbsentDate, setPreAbsentDate] = useState('');
   const [preAbsentTime, setPreAbsentTime] = useState('');
   const [semester, setSemester] = useState('');
@@ -40,7 +40,7 @@ export default function RoundCreateForm({ onClose, onSuccess }: Props) {
         name,
         type,
         departAt: `${departDate}T${departTime}:00.000Z`,
-        checkDeadline: `${deadlineDate}T${deadlineTime}:00.000Z`,
+        checkStartAt: `${checkStartDate}T${checkStartTime}:00.000Z`,
         preAbsentDeadline: `${preAbsentDate}T${preAbsentTime}:00.000Z`,
         semester,
       });
@@ -88,13 +88,13 @@ export default function RoundCreateForm({ onClose, onSuccess }: Props) {
           </div>
 
           <div className="w-full h-auto flex flex-col gap-1">
-            <p className="text-[12px] font-medium text-[#474747]">탑승 확인 마감 날짜 <span className="text-[#EF4444]">*</span></p>
-            <input required value={deadlineDate} onChange={e => setDeadlineDate(e.target.value)} type="date" className="w-full h-10 bg-white border border-[#d2d2d2] rounded-lg outline-none px-2.5 text-[#474747] text-[14px]" />
+            <p className="text-[12px] font-medium text-[#474747]">탑승 확인 시작 날짜 <span className="text-[#EF4444]">*</span></p>
+            <input required value={checkStartDate} onChange={e => setCheckStartDate(e.target.value)} type="date" className="w-full h-10 bg-white border border-[#d2d2d2] rounded-lg outline-none px-2.5 text-[#474747] text-[14px]" />
           </div>
 
           <div className="w-full h-auto flex flex-col gap-1">
-            <p className="text-[12px] font-medium text-[#474747]">탑승 확인 마감 시간 <span className="text-[#EF4444]">*</span></p>
-            <input required value={deadlineTime} onChange={e => setDeadlineTime(e.target.value)} type="time" className="w-full h-10 bg-white border border-[#d2d2d2] rounded-lg outline-none px-2.5 text-[#474747] text-[14px]" />
+            <p className="text-[12px] font-medium text-[#474747]">탑승 확인 시작 시간 <span className="text-[#EF4444]">*</span></p>
+            <input required value={checkStartTime} onChange={e => setCheckStartTime(e.target.value)} type="time" className="w-full h-10 bg-white border border-[#d2d2d2] rounded-lg outline-none px-2.5 text-[#474747] text-[14px]" />
           </div>
 
           <div className="w-full h-auto flex flex-col gap-1">
