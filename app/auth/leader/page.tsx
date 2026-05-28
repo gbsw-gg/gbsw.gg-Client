@@ -19,6 +19,7 @@ import LogoutModal from "@/components/modals/LogoutModal";
 
 type StatusType = "미확인" | "탑승 완료" | "미탑승";
 type ModalType = "checkin" | "absent" | null;
+type TabType = "checkin" | "members";
 
 type StudentStatus = "사전 미탑승" | "탑승 완료" | "미확인";
 
@@ -53,6 +54,7 @@ export default function LeaderPage() {
   const [timestamp, setTimestamp] = useState<string | undefined>(undefined);
   const [modal, setModal] = useState<ModalType>(null);
   const [absentReason, setAbsentReason] = useState<string | undefined>(undefined);
+  const [activeTab, setActiveTab] = useState<TabType>("checkin");
 
   const [busLabel, setBusLabel] = useState<string>("-");
   const [passwordChangeOpen, setPasswordChangeOpen] = useState(false);
@@ -62,11 +64,16 @@ export default function LeaderPage() {
   const [loaded, setLoaded] = useState(false);
 
   const isConfirmed = status === "탑승 완료" || status === "미탑승";
-  const showDashboard = status === "탑승 완료";
 
   const formatTime = (iso: string) => {
     const d = new Date(iso);
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  };
+
+  const loadBusData = async () => {
+    const [m, s] = await Promise.all([getMyBusMembers(), getMyBusStatus()]);
+    setMembers(m);
+    setBusStatus(s);
   };
 
   useEffect(() => {
@@ -93,23 +100,13 @@ export default function LeaderPage() {
           setAbsentReason(boarding.reason);
         }
       }
+
+      await loadBusData();
       setLoaded(true);
     };
     init();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isChecking]);
-
-  // 탑승 완료 후 대시보드 진입 시 버스 데이터 로드
-  useEffect(() => {
-    if (!showDashboard) return;
-    const loadBusData = async () => {
-      const [m, s] = await Promise.all([getMyBusMembers(), getMyBusStatus()]);
-      setMembers(m);
-      setBusStatus(s);
-    };
-    loadBusData();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showDashboard]);
 
   const handleConfirm = async (reason?: string) => {
     if (!schedule) return;
@@ -118,6 +115,7 @@ export default function LeaderPage() {
         await checkBoarding(schedule.id);
         setStatus("탑승 완료");
         setTimestamp(formatTime(new Date().toISOString()));
+        await loadBusData();
       } else if (modal === "absent") {
         await requestAbsent(schedule.id, reason ?? "");
         setStatus("미탑승");
@@ -137,125 +135,148 @@ export default function LeaderPage() {
 
   return (
     <>
-      {!showDashboard ? (
-        /* ── Phase 1: 본인 탑승 체크 ── */
-        <div className="w-full min-h-screen flex flex-col">
-          <div className="bg-[#05A787] pb-[80px]">
-            <StudentHeader name={name} grade={grade} classNum={classNum} number={number} onLogout={() => setLogoutOpen(true)} onChangePassword={() => setPasswordChangeOpen(true)} />
-          </div>
-          <div className="flex flex-col mt-[-60px]">
-            {loaded && !schedule ? (
-              <div className="mx-[25px] mt-[20px] bg-white rounded-[20px] shadow-[0_4px_10px_0_rgba(0,0,0,0.08)] px-[24px] py-[32px] flex flex-col items-center gap-[10px]">
-                <p className="text-[28px]">🚌</p>
-                <p className="text-[16px] font-bold text-[#3C3C3C]">지금은 버스 탑승 시간이 아닙니다</p>
-                <p className="text-[13px] text-[#888888] text-center">현재 활성화된 버스 회차가 없습니다.<br />탑승 시간에 다시 확인해 주세요.</p>
+      <div className="w-full min-h-screen flex flex-col">
+        <div className="bg-[#05A787] pb-[80px]">
+          <StudentHeader name={name} grade={grade} classNum={classNum} number={number} onLogout={() => setLogoutOpen(true)} onChangePassword={() => setPasswordChangeOpen(true)} />
+        </div>
+
+        <div className="flex flex-col mt-[-60px]">
+          {loaded && !schedule ? (
+            <div className="mx-[25px] mt-[20px] bg-white rounded-[20px] shadow-[0_4px_10px_0_rgba(0,0,0,0.08)] px-[24px] py-[32px] flex flex-col items-center gap-[10px]">
+              <p className="text-[28px]">🚌</p>
+              <p className="text-[16px] font-bold text-[#3C3C3C]">지금은 버스 탑승 시간이 아닙니다</p>
+              <p className="text-[13px] text-[#888888] text-center">현재 활성화된 버스 회차가 없습니다.<br />탑승 시간에 다시 확인해 주세요.</p>
+            </div>
+          ) : (
+            <>
+              {/* 탭 바 */}
+              <div className="mx-[25px] mt-[20px] flex bg-[#F1F1F1] rounded-[14px] p-[4px]">
+                <button
+                  onClick={() => setActiveTab("checkin")}
+                  className={`flex-1 h-[40px] rounded-[10px] text-[14px] font-semibold transition-colors ${
+                    activeTab === "checkin"
+                      ? "bg-white text-[#02AB87] shadow-sm"
+                      : "text-[#767676]"
+                  }`}
+                >
+                  탑승 체크
+                </button>
+                <button
+                  onClick={() => setActiveTab("members")}
+                  className={`flex-1 h-[40px] rounded-[10px] text-[14px] font-semibold transition-colors ${
+                    activeTab === "members"
+                      ? "bg-white text-[#02AB87] shadow-sm"
+                      : "text-[#767676]"
+                  }`}
+                >
+                  학생 명단
+                </button>
               </div>
-            ) : (
-              <>
-                <BusInfoCard
-                  busNumber={busLabel}
-                  week={schedule ? `${schedule.name} (${parsed?.typeLabel})` : "-"}
-                  departureDate={parsed?.date ?? "-"}
-                  departureTime={parsed?.time ?? "-"}
-                />
-                <StatusCard status={status} timestamp={timestamp} reason={absentReason} />
-                {!isConfirmed && (
-                  <ActionButtons
-                    onCheckIn={() => setModal("checkin")}
-                    onAbsent={() => setModal("absent")}
-                    checkStarted={schedule ? new Date() > new Date(schedule.checkStartAt) : false}
-                    absentExpired={schedule ? new Date() > new Date(schedule.preAbsentDeadline) : false}
+
+              {/* 탑승 체크 탭 */}
+              {activeTab === "checkin" && (
+                <>
+                  <BusInfoCard
+                    busNumber={busLabel}
+                    week={schedule ? `${schedule.name} (${parsed?.typeLabel})` : "-"}
+                    departureDate={parsed?.date ?? "-"}
+                    departureTime={parsed?.time ?? "-"}
                   />
-                )}
-              </>
-            )}
-            <Notice />
-          </div>
-        </div>
-      ) : (
-        /* ── Phase 2: 도우미 대시보드 ── */
-        <div className="w-full min-h-screen flex flex-col">
-          <div className="bg-[#05A787] pb-[80px]">
-            <StudentHeader name={name} grade={grade} classNum={classNum} number={number} onLogout={() => setLogoutOpen(true)} onChangePassword={() => setPasswordChangeOpen(true)} />
-          </div>
+                  <StatusCard status={status} timestamp={timestamp} reason={absentReason} />
+                  {!isConfirmed && (
+                    <ActionButtons
+                      onCheckIn={() => setModal("checkin")}
+                      onAbsent={() => setModal("absent")}
+                      checkStarted={schedule ? new Date() > new Date(schedule.checkStartAt) : false}
+                      absentExpired={schedule ? new Date() > new Date(schedule.preAbsentDeadline) : false}
+                    />
+                  )}
+                  <Notice />
+                </>
+              )}
 
-          <div className="flex flex-col mt-[-60px]">
-            {/* 담당 버스 + 통계 카드 */}
-            <div className="mx-[25px] mt-[20px] bg-white rounded-[20px] shadow-[0_4px_10px_0_rgba(0,0,0,0.15)]">
-              <div className="mx-[25px] py-[20px]">
-                <div className="pb-[12px] border-b border-[#D2D2D2]">
-                  <p className="text-[12px] font-medium text-[#474747]">담당 버스</p>
-                  <h2 className="text-[24px] font-bold text-[#3C3C3C] mt-[2px]">
-                    {busStatus ? `${busStatus.busNumber}호차` : "-"}
-                  </h2>
-                </div>
-                <div className="grid grid-cols-2 gap-y-[18px] mt-[16px]">
-                  <div>
-                    <p className="text-[12px] font-medium text-[#474747]">전체 인원</p>
-                    <p className="text-[22px] font-bold text-[#3C3C3C] mt-[2px]">{busStatus?.total ?? "-"}명</p>
-                  </div>
-                  <div>
-                    <p className="text-[12px] font-medium text-[#474747]">탑승 완료</p>
-                    <p className="text-[22px] font-bold text-[#027A65] mt-[2px]">{busStatus?.boarding ?? "-"}명</p>
-                  </div>
-                  <div>
-                    <p className="text-[12px] font-medium text-[#474747]">사전 미탑승</p>
-                    <p className="text-[22px] font-bold text-[#B45309] mt-[2px]">{busStatus?.preAbsent ?? "-"}명</p>
-                  </div>
-                  <div>
-                    <p className="text-[12px] font-medium text-[#474747]">미확인</p>
-                    <p className="text-[22px] font-bold text-[#EF4444] mt-[2px]">{busStatus ? busStatus.total - busStatus.boarding - busStatus.preAbsent : "-"}명</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* 학생 명단 */}
-            <div className="mx-[25px] mt-[24px] mb-[30px]">
-              <div className="flex justify-between items-center mb-[14px]">
-                <h2 className="text-[18px] font-bold text-[#3C3C3C]">학생 명단</h2>
-                <span className="text-[13px] font-medium text-[#767676]">{busStatus?.total ?? members.length}명</span>
-              </div>
-              <div className="bg-white rounded-[20px] shadow-[0_4px_10px_0_rgba(0,0,0,0.15)] overflow-hidden">
-                {members.map((member, index) => {
-                  const label = STATUS_LABEL[member.status];
-                  const copyPhone = async () => {
-                    if (!member.phone) return;
-                    await navigator.clipboard.writeText(member.phone);
-                    showToast('복사되었습니다.', 'success');
-                  };
-                  return (
-                    <div
-                      key={member.studentId}
-                      className={`px-[20px] py-[16px] flex justify-between items-center ${
-                        index !== members.length - 1 ? "border-b border-[#F0F0F0]" : ""
-                      }`}
-                    >
-                      <div className="flex flex-col gap-[3px]">
-                        <p className="text-[15px] font-bold text-[#3C3C3C]">{member.name}</p>
-                        <p className="text-[12px] font-medium text-[#767676]">
-                          {member.grade}학년 {member.classNum}반
-                        </p>
+              {/* 학생 명단 탭 */}
+              {activeTab === "members" && (
+                <div className="flex flex-col">
+                  {/* 담당 버스 + 통계 카드 */}
+                  <div className="mx-[25px] mt-[20px] bg-white rounded-[20px] shadow-[0_4px_10px_0_rgba(0,0,0,0.15)]">
+                    <div className="mx-[25px] py-[20px]">
+                      <div className="pb-[12px] border-b border-[#D2D2D2]">
+                        <p className="text-[12px] font-medium text-[#474747]">담당 버스</p>
+                        <h2 className="text-[24px] font-bold text-[#3C3C3C] mt-[2px]">
+                          {busStatus ? `${busStatus.busNumber}호차` : "-"}
+                        </h2>
                       </div>
-                      {member.phone && (
-                        <button
-                          onClick={copyPhone}
-                          className="text-[12px] font-medium text-[#767676] active:opacity-50 transition-opacity mx-[8px]"
-                        >
-                          {member.phone}
-                        </button>
-                      )}
-                      <p className="text-[13px] font-semibold" style={{ color: STATUS_COLOR[label] }}>
-                        {label}
-                      </p>
+                      <div className="grid grid-cols-2 gap-y-[18px] mt-[16px]">
+                        <div>
+                          <p className="text-[12px] font-medium text-[#474747]">전체 인원</p>
+                          <p className="text-[22px] font-bold text-[#3C3C3C] mt-[2px]">{busStatus?.total ?? "-"}명</p>
+                        </div>
+                        <div>
+                          <p className="text-[12px] font-medium text-[#474747]">탑승 완료</p>
+                          <p className="text-[22px] font-bold text-[#027A65] mt-[2px]">{busStatus?.boarding ?? "-"}명</p>
+                        </div>
+                        <div>
+                          <p className="text-[12px] font-medium text-[#474747]">사전 미탑승</p>
+                          <p className="text-[22px] font-bold text-[#B45309] mt-[2px]">{busStatus?.preAbsent ?? "-"}명</p>
+                        </div>
+                        <div>
+                          <p className="text-[12px] font-medium text-[#474747]">미확인</p>
+                          <p className="text-[22px] font-bold text-[#EF4444] mt-[2px]">{busStatus ? busStatus.total - busStatus.boarding - busStatus.preAbsent : "-"}명</p>
+                        </div>
+                      </div>
                     </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
+                  </div>
+
+                  {/* 학생 명단 */}
+                  <div className="mx-[25px] mt-[24px] mb-[30px]">
+                    <div className="flex justify-between items-center mb-[14px]">
+                      <h2 className="text-[18px] font-bold text-[#3C3C3C]">학생 명단</h2>
+                      <span className="text-[13px] font-medium text-[#767676]">{busStatus?.total ?? members.length}명</span>
+                    </div>
+                    <div className="bg-white rounded-[20px] shadow-[0_4px_10px_0_rgba(0,0,0,0.15)] overflow-hidden">
+                      {members.map((member, index) => {
+                        const label = STATUS_LABEL[member.status];
+                        const copyPhone = async () => {
+                          if (!member.phone) return;
+                          await navigator.clipboard.writeText(member.phone);
+                          showToast('복사되었습니다.', 'success');
+                        };
+                        return (
+                          <div
+                            key={member.studentId}
+                            className={`px-[20px] py-[16px] flex justify-between items-center ${
+                              index !== members.length - 1 ? "border-b border-[#F0F0F0]" : ""
+                            }`}
+                          >
+                            <div className="flex flex-col gap-[3px]">
+                              <p className="text-[15px] font-bold text-[#3C3C3C]">{member.name}</p>
+                              <p className="text-[12px] font-medium text-[#767676]">
+                                {member.grade}학년 {member.classNum}반
+                              </p>
+                            </div>
+                            {member.phone && (
+                              <button
+                                onClick={copyPhone}
+                                className="text-[12px] font-medium text-[#767676] active:opacity-50 transition-opacity mx-[8px]"
+                              >
+                                {member.phone}
+                              </button>
+                            )}
+                            <p className="text-[13px] font-semibold" style={{ color: STATUS_COLOR[label] }}>
+                              {label}
+                            </p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
         </div>
-      )}
+      </div>
 
       {modal && (
         <ConfirmModal
