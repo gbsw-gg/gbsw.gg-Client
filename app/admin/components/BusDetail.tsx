@@ -18,6 +18,7 @@ interface StudentRecord {
   grade: number;
   classNum: number;
   phone?: string;
+  station?: string;
   status: 'BOARDING' | 'PRE_ABSENT' | 'ABSENT';
   reason: string | null;
 }
@@ -28,6 +29,7 @@ interface BusMemberApi {
   grade: number;
   classNum: number;
   phone?: string;
+  station?: string;
   status: 'BOARDING' | 'PRE_ABSENT' | 'ABSENT';
   reason: string | null;
 }
@@ -90,6 +92,7 @@ export default function BusDetail({ busId, leaderName: initialLeaderName, onBack
             grade: m.grade,
             classNum: m.classNum,
             phone: m.phone,
+            station: m.station,
             status: m.status,
             reason: m.reason,
           }))
@@ -213,6 +216,9 @@ export default function BusDetail({ busId, leaderName: initialLeaderName, onBack
                 <div className="w-auto justify-between">
                   <p className="text-[14px] font-bold text-[#3c3c3c]">{s.studentName}</p>
                   <p className="text-[12px] font-medium text-[#3c3c3c]">{s.grade}학년 {s.classNum}반</p>
+                  {s.station && (
+                    <p className="text-[12px] font-medium text-[#747474]">정류장: {s.station}</p>
+                  )}
                 </div>
                 {s.phone && (
                   <button
