@@ -15,6 +15,8 @@ export default function RoundCreateForm({ onClose, onSuccess }: Props) {
   const [departTime, setDepartTime] = useState('');
   const [checkStartDate, setCheckStartDate] = useState('');
   const [checkStartTime, setCheckStartTime] = useState('');
+  const [preAbsentDeadlineDate, setPreAbsentDeadlineDate] = useState('');
+  const [preAbsentDeadlineTime, setPreAbsentDeadlineTime] = useState('');
   const [semester, setSemester] = useState('');
   const [visible, setVisible] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -32,12 +34,12 @@ export default function RoundCreateForm({ onClose, onSuccess }: Props) {
     e.preventDefault();
     setLoading(true);
     try {
-      // TODO: 백엔드 스키마 확정 후 checkStart 연결 / checkDeadline 제거
       const res = await api.post<ApiResponse>('/api/schedules', {
         name,
         type,
         departAt: `${departDate}T${departTime}:00`,
-        checkStart: `${checkStartDate}T${checkStartTime}:00`,
+        checkStartAt: `${checkStartDate}T${checkStartTime}:00`,
+        preAbsentDeadline: `${preAbsentDeadlineDate}T${preAbsentDeadlineTime}:00`,
         semester,
       });
       if (res.success) onSuccess();
@@ -89,6 +91,16 @@ export default function RoundCreateForm({ onClose, onSuccess }: Props) {
         <div className="w-full h-auto flex flex-col gap-1">
           <p className="text-[12px] font-medium text-[#474747]">탑승 체크 시작 시간 <span className="text-[#EF4444]">*</span></p>
           <input required value={checkStartTime} onChange={e => setCheckStartTime(e.target.value)} type="time" className="w-full h-10 bg-white border border-[#d2d2d2] rounded-lg outline-none px-2.5 text-[#474747] text-[14px]" />
+        </div>
+
+        <div className="w-full h-auto flex flex-col gap-1">
+          <p className="text-[12px] font-medium text-[#474747]">사전 미탑승 마감 날짜 <span className="text-[#EF4444]">*</span></p>
+          <input required value={preAbsentDeadlineDate} onChange={e => setPreAbsentDeadlineDate(e.target.value)} type="date" className="w-full h-10 bg-white border border-[#d2d2d2] rounded-lg outline-none px-2.5 text-[#474747] text-[14px]" />
+        </div>
+
+        <div className="w-full h-auto flex flex-col gap-1">
+          <p className="text-[12px] font-medium text-[#474747]">사전 미탑승 마감 시간 <span className="text-[#EF4444]">*</span></p>
+          <input required value={preAbsentDeadlineTime} onChange={e => setPreAbsentDeadlineTime(e.target.value)} type="time" className="w-full h-10 bg-white border border-[#d2d2d2] rounded-lg outline-none px-2.5 text-[#474747] text-[14px]" />
         </div>
 
         <div className='w-full h-10 flex flex-row justify-between'>

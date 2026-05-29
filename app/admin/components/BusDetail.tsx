@@ -17,7 +17,7 @@ interface StudentRecord {
   grade: number;
   classNum: number;
   phone?: string;
-  status: 'BOARDING' | 'PRE_ABSENT' | 'ABSENT';
+  status: 'BOARDING' | 'PRE_ABSENT' | 'NOT_CHECKED';
   reason: string | null;
 }
 
@@ -27,7 +27,7 @@ interface BusMemberApi {
   grade: number;
   classNum: number;
   phone?: string;
-  status: 'BOARDING' | 'PRE_ABSENT' | 'ABSENT';
+  status: 'BOARDING' | 'PRE_ABSENT' | 'NOT_CHECKED';
   reason: string | null;
 }
 
@@ -40,7 +40,7 @@ interface BusInfo {
 const STATUS_LABEL: Record<string, string> = {
   BOARDING: '탑승 완료',
   PRE_ABSENT: '사전 미탑승',
-  ABSENT: '미확인',
+  NOT_CHECKED: '미확인',
 };
 
 const STATUS_COLOR: Record<string, string> = {
@@ -122,7 +122,7 @@ export default function BusDetail({ busId, leaderName: initialLeaderName, onBack
   const total = students.length;
   const boarded = students.filter(s => s.status === 'BOARDING').length;
   const preAbsent = students.filter(s => s.status === 'PRE_ABSENT').length;
-  const unknown = students.filter(s => s.status === 'ABSENT').length;
+  const unknown = students.filter(s => s.status === 'NOT_CHECKED').length;
 
   return (
     <div className="w-full h-auto p-6.25 bg-white flex flex-col">
