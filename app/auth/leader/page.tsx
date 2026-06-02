@@ -35,6 +35,11 @@ const STATUS_COLOR: Record<StudentStatus, string> = {
   "미확인": "#767676",
 };
 
+const LEADER_TYPE_LABEL: Record<string, string> = {
+  OUTBOUND: "귀가 도우미",
+  INBOUND: "귀교 도우미",
+};
+
 export default function LeaderPage() {
   const { logout } = useAuth();
   const { getMyBoarding, checkBoarding, requestAbsent } = useAttendance();
@@ -43,11 +48,6 @@ export default function LeaderPage() {
   const { user } = useUser();
   const { showToast } = useToast();
   const { isChecking } = useRequireRole(['LEADER']);
-
-  const name = user ? `${user.name} (도우미)` : "도우미";
-  const grade = user?.grade ?? 0;
-  const classNum = user?.classNum ?? 0;
-  const number = user?.studentId ? parseInt(user.studentId.slice(-2), 10) : undefined;
 
   const [schedule, setSchedule] = useState<Schedule | null>(null);
   const [status, setStatus] = useState<StatusType>("미확인");
@@ -62,6 +62,17 @@ export default function LeaderPage() {
   const [members, setMembers] = useState<BusMember[]>([]);
   const [busStatus, setBusStatus] = useState<BusStatus | null>(null);
   const [loaded, setLoaded] = useState(false);
+
+  // 활성 스케쥴 타입과 도우미 타입이 일치할 때만 도우미로 동작
+  const isMatchingLeader = !schedule || !user?.leaderType || user.leaderType === schedule.type;
+
+  const leaderTypeLabel = user?.leaderType ? LEADER_TYPE_LABEL[user.leaderType] : "도우미";
+  const displayName = user
+    ? (isMatchingLeader ? `${user.name} (${leaderTypeLabel})` : user.name)
+    : "도우미";
+  const grade = user?.grade ?? 0;
+  const classNum = user?.classNum ?? 0;
+  const number = user?.studentId ? parseInt(user.studentId.slice(-2), 10) : undefined;
 
   const isConfirmed = status === "탑승 완료" || status === "미탑승";
 
@@ -133,30 +144,60 @@ export default function LeaderPage() {
 
   if (isChecking) return null;
 
+  const noScheduleCard = (
+    <div className="mx-[25px] mt-[20px] bg-white rounded-[20px] shadow-[0_4px_10px_0_rgba(0,0,0,0.08)] px-[24px] py-[32px] flex flex-col items-center gap-[10px]">
+      <p className="text-[28px]">🚌</p>
+      <p className="text-[16px] font-bold text-[#3C3C3C]">지금은 버스 탑승 시간이 아닙니다</p>
+      <p className="text-[13px] text-[#888888] text-center">현재 활성화된 버스 회차가 없습니다.<br />탑승 시간에 다시 확인해 주세요.</p>
+    </div>
+  );
+
+  const checkinContent = (
+    <>
+      <BusInfoCard
+        busNumber={busLabel}
+        week={schedule ? `${schedule.name} (${parsed?.typeLabel})` : "-"}
+        departureDate={parsed?.date ?? "-"}
+        departureTime={parsed?.time ?? "-"}
+      />
+      <StatusCard status={status} timestamp={timestamp} reason={absentReason} />
+      {!isConfirmed && (
+        <ActionButtons
+          onCheckIn={() => setModal("checkin")}
+          onAbsent={() => setModal("absent")}
+          checkStarted={schedule ? new Date() > new Date(schedule.checkStartAt) : false}
+          absentExpired={schedule ? new Date() > new Date(schedule.preAbsentDeadline) : false}
+        />
+      )}
+      <Notice />
+    </>
+  );
+
   return (
     <>
       <div className="w-full min-h-screen flex flex-col">
         <div className="bg-[#05A787] pb-[80px]">
-          <StudentHeader name={name} grade={grade} classNum={classNum} number={number} onLogout={() => setLogoutOpen(true)} onChangePassword={() => setPasswordChangeOpen(true)} />
+          <StudentHeader
+            name={displayName}
+            grade={grade}
+            classNum={classNum}
+            number={number}
+            onLogout={() => setLogoutOpen(true)}
+            onChangePassword={() => setPasswordChangeOpen(true)}
+          />
         </div>
 
         <div className="flex flex-col mt-[-60px]">
           {loaded && !schedule ? (
-            <div className="mx-[25px] mt-[20px] bg-white rounded-[20px] shadow-[0_4px_10px_0_rgba(0,0,0,0.08)] px-[24px] py-[32px] flex flex-col items-center gap-[10px]">
-              <p className="text-[28px]">🚌</p>
-              <p className="text-[16px] font-bold text-[#3C3C3C]">지금은 버스 탑승 시간이 아닙니다</p>
-              <p className="text-[13px] text-[#888888] text-center">현재 활성화된 버스 회차가 없습니다.<br />탑승 시간에 다시 확인해 주세요.</p>
-            </div>
-          ) : (
+            noScheduleCard
+          ) : isMatchingLeader ? (
+            /* ── 도우미 모드: 탭 UI ── */
             <>
-              {/* 탭 바 */}
               <div className="mx-[25px] mt-[20px] flex bg-[#F1F1F1] rounded-[14px] p-[4px]">
                 <button
                   onClick={() => setActiveTab("checkin")}
                   className={`flex-1 h-[40px] rounded-[10px] text-[14px] font-semibold transition-colors ${
-                    activeTab === "checkin"
-                      ? "bg-white text-[#02AB87] shadow-sm"
-                      : "text-[#767676]"
+                    activeTab === "checkin" ? "bg-white text-[#02AB87] shadow-sm" : "text-[#767676]"
                   }`}
                 >
                   탑승 체크
@@ -164,41 +205,17 @@ export default function LeaderPage() {
                 <button
                   onClick={() => setActiveTab("members")}
                   className={`flex-1 h-[40px] rounded-[10px] text-[14px] font-semibold transition-colors ${
-                    activeTab === "members"
-                      ? "bg-white text-[#02AB87] shadow-sm"
-                      : "text-[#767676]"
+                    activeTab === "members" ? "bg-white text-[#02AB87] shadow-sm" : "text-[#767676]"
                   }`}
                 >
                   학생 명단
                 </button>
               </div>
 
-              {/* 탑승 체크 탭 */}
-              {activeTab === "checkin" && (
-                <>
-                  <BusInfoCard
-                    busNumber={busLabel}
-                    week={schedule ? `${schedule.name} (${parsed?.typeLabel})` : "-"}
-                    departureDate={parsed?.date ?? "-"}
-                    departureTime={parsed?.time ?? "-"}
-                  />
-                  <StatusCard status={status} timestamp={timestamp} reason={absentReason} />
-                  {!isConfirmed && (
-                    <ActionButtons
-                      onCheckIn={() => setModal("checkin")}
-                      onAbsent={() => setModal("absent")}
-                      checkStarted={schedule ? new Date() > new Date(schedule.checkStartAt) : false}
-                      absentExpired={schedule ? new Date() > new Date(schedule.preAbsentDeadline) : false}
-                    />
-                  )}
-                  <Notice />
-                </>
-              )}
+              {activeTab === "checkin" && checkinContent}
 
-              {/* 학생 명단 탭 */}
               {activeTab === "members" && (
                 <div className="flex flex-col">
-                  {/* 담당 버스 + 통계 카드 */}
                   <div className="mx-[25px] mt-[20px] bg-white rounded-[20px] shadow-[0_4px_10px_0_rgba(0,0,0,0.15)]">
                     <div className="mx-[25px] py-[20px]">
                       <div className="pb-[12px] border-b border-[#D2D2D2]">
@@ -228,7 +245,6 @@ export default function LeaderPage() {
                     </div>
                   </div>
 
-                  {/* 학생 명단 */}
                   <div className="mx-[25px] mt-[24px] mb-[30px]">
                     <div className="flex justify-between items-center mb-[14px]">
                       <h2 className="text-[18px] font-bold text-[#3C3C3C]">학생 명단</h2>
@@ -274,6 +290,9 @@ export default function LeaderPage() {
                 </div>
               )}
             </>
+          ) : (
+            /* ── 학생 모드: 스케쥴 타입 불일치 시 일반 학생처럼 표시 ── */
+            checkinContent
           )}
         </div>
       </div>
