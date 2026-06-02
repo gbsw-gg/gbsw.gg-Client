@@ -41,7 +41,7 @@ export default function ActionButtons({
       ) : (
         <button
           onClick={onAbsent}
-          className="w-full h-[56px] bg-[#737373] rounded-[14px] flex items-center justify-center gap-[8px] active:opacity-80 transition-opacity"
+          className="w-full h-[56px] bg-[#EF4444] rounded-[14px] flex items-center justify-center gap-[8px] active:opacity-80 transition-opacity"
         >
           <XCircle size={20} color="white" />
           <span className="text-white font-semibold text-[16px]">미탑승 신청하기</span>
