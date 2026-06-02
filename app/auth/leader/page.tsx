@@ -62,6 +62,7 @@ export default function LeaderPage() {
   const [members, setMembers] = useState<BusMember[]>([]);
   const [busStatus, setBusStatus] = useState<BusStatus | null>(null);
   const [loaded, setLoaded] = useState(false);
+  const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
 
   // 활성 스케쥴 타입이 도우미의 leaderTypes에 포함될 때만 도우미로 동작
   const isMatchingLeader = !schedule || (user?.leaderTypes?.includes(schedule.type) ?? false);
@@ -267,40 +268,50 @@ export default function LeaderPage() {
                           await navigator.clipboard.writeText(member.phone);
                           showToast('복사되었습니다.', 'success');
                         };
+                        const isPreAbsent = member.status === 'PRE_ABSENT';
+                        const isExpanded = expandedIndex === index;
                         return (
                           <div
                             key={member.studentId}
-                            className={`px-[20px] py-[18px] flex items-center gap-[8px] ${
+                            onClick={() => isPreAbsent ? setExpandedIndex(isExpanded ? null : index) : undefined}
+                            className={`px-[20px] flex flex-col ${isPreAbsent ? 'cursor-pointer' : ''} ${
                               index !== members.length - 1 ? "border-b border-[#F0F0F0]" : ""
                             }`}
                           >
-                            {/* 학생 정보 — 이름 / 학년반 / 정류장 */}
-                            <div className="flex-1 min-w-0 flex flex-col gap-[2px]">
-                              <p className="text-[15px] font-bold text-[#3C3C3C]">{member.name}</p>
-                              <p className="text-[12px] font-medium text-[#767676]">
-                                {member.grade}학년 {member.classNum}반
-                              </p>
-                              {member.station && (
-                                <p className="text-[12px] font-medium text-[#A0A0A0]">{member.station}</p>
-                              )}
+                            <div className="py-[18px] flex items-center gap-[8px]">
+                              {/* 학생 정보 — 이름 / 학년반 / 정류장 */}
+                              <div className="flex-1 min-w-0 flex flex-col gap-[2px]">
+                                <p className="text-[15px] font-bold text-[#3C3C3C]">{member.name}</p>
+                                <p className="text-[12px] font-medium text-[#767676]">
+                                  {member.grade}학년 {member.classNum}반
+                                </p>
+                                {member.station && (
+                                  <p className="text-[12px] font-medium text-[#A0A0A0]">{member.station}</p>
+                                )}
+                              </div>
+                              {/* 전화번호 — 고정 너비 */}
+                              <div className="shrink-0 w-[88px] flex justify-center">
+                                {member.phone && (
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); copyPhone(); }}
+                                    className="text-[11px] font-medium text-[#767676] active:opacity-50 transition-opacity"
+                                  >
+                                    {member.phone}
+                                  </button>
+                                )}
+                              </div>
+                              {/* 상태 — 고정 너비 */}
+                              <div className="shrink-0 w-[72px] flex justify-end">
+                                <p className="text-[12px] font-semibold text-right whitespace-nowrap" style={{ color: STATUS_COLOR[label] }}>
+                                  {label}
+                                </p>
+                              </div>
                             </div>
-                            {/* 전화번호 — 고정 너비 */}
-                            <div className="shrink-0 w-[88px] flex justify-center">
-                              {member.phone && (
-                                <button
-                                  onClick={copyPhone}
-                                  className="text-[11px] font-medium text-[#767676] active:opacity-50 transition-opacity"
-                                >
-                                  {member.phone}
-                                </button>
-                              )}
-                            </div>
-                            {/* 상태 — 고정 너비 */}
-                            <div className="shrink-0 w-[72px] flex justify-end">
-                              <p className="text-[12px] font-semibold text-right whitespace-nowrap" style={{ color: STATUS_COLOR[label] }}>
-                                {label}
-                              </p>
-                            </div>
+                            {isPreAbsent && isExpanded && (
+                              <div className="pb-[14px] pt-[2px] border-t border-[#F0F0F0]">
+                                <p className="text-[12px] text-[#767676] font-medium pt-[10px]">사유: {member.reason ?? '미입력'}</p>
+                              </div>
+                            )}
                           </div>
                         );
                       })}
