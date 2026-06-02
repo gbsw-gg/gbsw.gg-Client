@@ -90,6 +90,13 @@ export default function LeaderPage() {
   };
 
   useEffect(() => {
+    if (activeTab !== 'members') return;
+    const interval = setInterval(loadBusData, 5000);
+    return () => clearInterval(interval);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
+
+  useEffect(() => {
     if (isChecking) return;
     const init = async () => {
       const [s, boarding, myStatus] = await Promise.all([
