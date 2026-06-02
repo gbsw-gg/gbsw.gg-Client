@@ -63,10 +63,12 @@ export default function LeaderPage() {
   const [busStatus, setBusStatus] = useState<BusStatus | null>(null);
   const [loaded, setLoaded] = useState(false);
 
-  // 활성 스케쥴 타입과 도우미 타입이 일치할 때만 도우미로 동작
-  const isMatchingLeader = !schedule || !user?.leaderType || user.leaderType === schedule.type;
+  // 활성 스케쥴 타입이 도우미의 leaderTypes에 포함될 때만 도우미로 동작
+  const isMatchingLeader = !schedule || (user?.leaderTypes?.includes(schedule.type) ?? false);
 
-  const leaderTypeLabel = user?.leaderType ? LEADER_TYPE_LABEL[user.leaderType] : "도우미";
+  const leaderTypeLabel = schedule && user?.leaderTypes?.includes(schedule.type)
+    ? LEADER_TYPE_LABEL[schedule.type]
+    : user?.leaderTypes?.[0] ? LEADER_TYPE_LABEL[user.leaderTypes[0]] : "도우미";
   const displayName = user
     ? (isMatchingLeader ? `${user.name} (${leaderTypeLabel})` : user.name)
     : "도우미";

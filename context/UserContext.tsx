@@ -19,7 +19,7 @@ export interface User {
   classNum: number;
   role: UserRole;
   phone: string;
-  leaderType?: 'OUTBOUND' | 'INBOUND' | null;
+  leaderTypes?: ('OUTBOUND' | 'INBOUND')[];
 }
 
 interface UserContextValue {
