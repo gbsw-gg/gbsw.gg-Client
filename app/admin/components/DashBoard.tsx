@@ -20,7 +20,7 @@ interface DashboardData {
 }
 
 interface Props {
-  onSelectBus: (busId: number, leaderName: string) => void;
+  onSelectBus: (busId: number) => void;
 }
 
 export default function DashBoard({ onSelectBus }: Props) {
@@ -89,7 +89,7 @@ export default function DashBoard({ onSelectBus }: Props) {
 
       <div className="w-full h-auto flex flex-col gap-5">
         {buses.map((bus) => (
-          <div key={bus.busNumber} onClick={() => onSelectBus(bus.busNumber, bus.leaderName)} className="w-full h-auto flex flex-col p-5 rounded-[20px] shadow-sm cursor-pointer">
+          <div key={bus.busNumber} onClick={() => onSelectBus(bus.busNumber)} className="w-full h-auto flex flex-col p-5 rounded-[20px] shadow-sm cursor-pointer">
             <div className="w-full flex flex-row justify-between">
               <p className="text-[20px] font-bold text-[#3c3c3c]">{bus.busNumber}호차</p>
               <ChevronRight color="#3c3c3c" />

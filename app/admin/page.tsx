@@ -13,7 +13,7 @@ type Menu = "dashboard" | "round" | "busChange";
 export default function Admin() {
   const { isChecking } = useRequireRole(['ADMIN']);
   const [selected, setSelected] = useState<Menu>("dashboard");
-  const [selectedBus, setSelectedBus] = useState<{ id: number; leaderName: string } | null>(null);
+  const [selectedBus, setSelectedBus] = useState<{ id: number } | null>(null);
 
   const handleSelectMenu = (menu: Menu) => {
     setSelected(menu);
@@ -27,10 +27,10 @@ export default function Admin() {
       <Header selected={selected} onSelect={handleSelectMenu} />
       <div className="flex-1 overflow-y-auto">
         {selected === "dashboard" && !selectedBus && (
-          <DashBoard onSelectBus={(id, leaderName) => setSelectedBus({ id, leaderName })} />
+          <DashBoard onSelectBus={(id) => setSelectedBus({ id })} />
         )}
         {selected === "dashboard" && selectedBus && (
-          <BusDetail busId={selectedBus.id} leaderName={selectedBus.leaderName} onBack={() => setSelectedBus(null)} />
+          <BusDetail busId={selectedBus.id} onBack={() => setSelectedBus(null)} />
         )}
         {selected === "round" && <RoundManage />}
         {selected === "busChange" && <BusChangeManage />}

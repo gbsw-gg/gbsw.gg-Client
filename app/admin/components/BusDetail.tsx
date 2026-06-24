@@ -1,16 +1,16 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { ChevronLeft, Pencil, Check, X } from 'lucide-react';
+import { ChevronLeft, Pencil, Check, X, Plus } from 'lucide-react';
 import api, { ApiResponse } from '@/lib/api';
 import { useToast } from '@/context/ToastContext';
-import { Schedule } from '@/hooks/useSchedule';
 
 interface Props {
   busId: number;
-  leaderName: string;
   onBack: () => void;
 }
+
+type LeaderType = 'OUTBOUND' | 'INBOUND';
 
 interface StudentRecord {
   studentId: number;
@@ -19,7 +19,7 @@ interface StudentRecord {
   classNum: number;
   phone?: string;
   station?: string;
-  status: 'BOARDING' | 'PRE_ABSENT' | 'ABSENT';
+  status: 'BOARDING' | 'PRE_ABSENT' | 'NOT_CHECKED';
   reason: string | null;
 }
 
@@ -30,7 +30,7 @@ interface BusMemberApi {
   classNum: number;
   phone?: string;
   station?: string;
-  status: 'BOARDING' | 'PRE_ABSENT' | 'ABSENT';
+  status: 'BOARDING' | 'PRE_ABSENT' | 'NOT_CHECKED';
   reason: string | null;
 }
 
@@ -38,12 +38,14 @@ interface BusInfo {
   id: number;
   busNumber: number;
   leaderName: string;
+  outboundLeaderName?: string | null;
+  inboundLeaderName?: string | null;
 }
 
 const STATUS_LABEL: Record<string, string> = {
   BOARDING: '탑승 완료',
   PRE_ABSENT: '사전 미탑승',
-  ABSENT: '미확인',
+  NOT_CHECKED: '미확인',
 };
 
 const STATUS_COLOR: Record<string, string> = {
@@ -52,32 +54,32 @@ const STATUS_COLOR: Record<string, string> = {
   '미확인': 'text-[#3c3c3c]',
 };
 
-export default function BusDetail({ busId, leaderName: initialLeaderName, onBack }: Props) {
+export default function BusDetail({ busId, onBack }: Props) {
   const { showToast } = useToast();
   const [students, setStudents] = useState<StudentRecord[]>([]);
   const [busDbId, setBusDbId] = useState<number | null>(null);
+  const [outboundLeader, setOutboundLeader] = useState<string>('');
+  const [inboundLeader, setInboundLeader] = useState<string>('');
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
-  const [currentLeaderName, setCurrentLeaderName] = useState(initialLeaderName);
-  const [isEditing, setIsEditing] = useState(false);
+  const [editingType, setEditingType] = useState<LeaderType | null>(null);
   const [studentNumber, setStudentNumber] = useState('');
   const [saving, setSaving] = useState(false);
-  const [scheduleType, setScheduleType] = useState<'OUTBOUND' | 'INBOUND' | null>(null);
 
-  useEffect(() => {
-    api.get<ApiResponse<Schedule>>('/api/schedules/active')
-      .then(res => { if (res.success) setScheduleType(res.data.type); })
-      .catch(() => {});
-  }, []);
-
-  useEffect(() => {
+  const loadBus = () =>
     api.get<ApiResponse<BusInfo[]>>('/api/buses')
       .then(res => {
-        if (res.success) {
-          const bus = res.data.find(b => b.busNumber === busId);
-          if (bus) setBusDbId(bus.id);
-        }
+        if (!res.success) return;
+        const bus = res.data.find(b => b.busNumber === busId);
+        if (!bus) return;
+        setBusDbId(bus.id);
+        setOutboundLeader(bus.outboundLeaderName ?? '');
+        setInboundLeader(bus.inboundLeaderName ?? '');
       })
       .catch(() => {});
+
+  useEffect(() => {
+    loadBus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [busId]);
 
   useEffect(() => {
@@ -107,21 +109,30 @@ export default function BusDetail({ busId, leaderName: initialLeaderName, onBack
     showToast('복사되었습니다.', 'success');
   };
 
+  const startEdit = (type: LeaderType) => {
+    setEditingType(type);
+    setStudentNumber('');
+  };
+
+  const cancelEdit = () => {
+    setEditingType(null);
+    setStudentNumber('');
+  };
+
   const handleLeaderSave = async () => {
-    if (!busDbId || !studentNumber.trim() || !scheduleType) return;
+    if (!busDbId || !editingType || !studentNumber.trim()) return;
     setSaving(true);
     try {
+      const params = new URLSearchParams({
+        studentNumber: studentNumber.trim(),
+        type: editingType,
+      });
       const res = await api.patch<ApiResponse>(
-        `/api/admin/buses/${busDbId}/leader?studentNumber=${encodeURIComponent(studentNumber.trim())}&type=${scheduleType}`
+        `/api/admin/buses/${busDbId}/leader?${params.toString()}`
       );
       if (res.success) {
-        const busRes = await api.get<ApiResponse<BusInfo[]>>('/api/buses');
-        if (busRes.success) {
-          const bus = busRes.data.find(b => b.busNumber === busId);
-          if (bus) setCurrentLeaderName(bus.leaderName);
-        }
-        setIsEditing(false);
-        setStudentNumber('');
+        await loadBus();
+        cancelEdit();
       }
     } catch {
       // 에러 처리
@@ -133,7 +144,50 @@ export default function BusDetail({ busId, leaderName: initialLeaderName, onBack
   const total = students.length;
   const boarded = students.filter(s => s.status === 'BOARDING').length;
   const preAbsent = students.filter(s => s.status === 'PRE_ABSENT').length;
-  const unknown = students.filter(s => s.status === 'ABSENT').length;
+  const unknown = students.filter(s => s.status === 'NOT_CHECKED').length;
+
+  const renderLeaderRow = (type: LeaderType, label: string, name: string) => {
+    if (editingType === type) {
+      return (
+        <div className="flex flex-row items-center gap-2 mt-1">
+          <p className="text-[12px] text-[#747474] font-medium whitespace-nowrap">{label}:</p>
+          <input
+            autoFocus
+            value={studentNumber}
+            onChange={e => setStudentNumber(e.target.value)}
+            placeholder="학번 입력"
+            className="h-7 border-b border-[#d2d2d2] outline-none text-[12px] text-[#3c3c3c] px-1 w-28 focus:border-[#02AB87]"
+          />
+          <button onClick={handleLeaderSave} disabled={saving} className="cursor-pointer">
+            <Check size={16} color="#02AB87" />
+          </button>
+          <button onClick={cancelEdit} className="cursor-pointer">
+            <X size={16} color="#747474" />
+          </button>
+        </div>
+      );
+    }
+    return (
+      <div className="flex flex-row items-center gap-2 mt-1">
+        {name ? (
+          <>
+            <p className="text-[12px] text-[#747474] font-medium">{label}: {name}</p>
+            <button onClick={() => startEdit(type)} className="cursor-pointer" aria-label={`${label} 변경`}>
+              <Pencil size={12} color="#747474" />
+            </button>
+          </>
+        ) : (
+          <>
+            <p className="text-[12px] text-[#9b9b9b] font-medium">{label}: 미배정</p>
+            <button onClick={() => startEdit(type)} className="cursor-pointer flex items-center gap-0.5 text-[11px] text-[#02AB87] font-medium" aria-label={`${label} 배정`}>
+              <Plus size={12} />
+              배정
+            </button>
+          </>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="w-full h-auto p-6.25 bg-white flex flex-col">
@@ -145,31 +199,8 @@ export default function BusDetail({ busId, leaderName: initialLeaderName, onBack
       <div className="w-full h-auto px-6.25 py-5 bg-white flex flex-col rounded-[20px] shadow-sm">
         <p className="text-[#3c3c3c] text-[24px] font-bold">{busId}호차</p>
 
-        {isEditing ? (
-          <div className="flex flex-row items-center gap-2 mt-1">
-            <p className="text-[12px] text-[#747474] font-medium">대표자:</p>
-            <input
-              autoFocus
-              value={studentNumber}
-              onChange={e => setStudentNumber(e.target.value)}
-              placeholder="학번 입력"
-              className="h-7 border-b border-[#d2d2d2] outline-none text-[12px] text-[#3c3c3c] px-1 w-28 focus:border-[#02AB87]"
-            />
-            <button onClick={handleLeaderSave} disabled={saving} className="cursor-pointer">
-              <Check size={16} color="#02AB87" />
-            </button>
-            <button onClick={() => { setIsEditing(false); setStudentNumber(''); }} className="cursor-pointer">
-              <X size={16} color="#747474" />
-            </button>
-          </div>
-        ) : (
-          <div className="flex flex-row items-center gap-2 mt-1">
-            <p className="text-[12px] text-[#747474] font-medium">대표자: {currentLeaderName}</p>
-            <button onClick={() => setIsEditing(true)} className="cursor-pointer">
-              <Pencil size={12} color="#747474" />
-            </button>
-          </div>
-        )}
+        {renderLeaderRow('OUTBOUND', '귀가 도우미', outboundLeader)}
+        {renderLeaderRow('INBOUND', '귀교 도우미', inboundLeader)}
 
         <div className="w-full h-px bg-[#d2d2d2] my-5" />
 
