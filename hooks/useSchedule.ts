@@ -8,7 +8,8 @@ export interface Schedule {
   name: string;
   type: 'OUTBOUND' | 'INBOUND';
   departAt: string;
-  checkDeadline: string;
+  checkStartAt: string;
+  preAbsentDeadline: string;
   isActive: boolean;
   semester: string;
 }

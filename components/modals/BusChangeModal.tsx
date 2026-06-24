@@ -38,9 +38,10 @@ interface BusChangeModalProps {
   onSuccess?: () => void;
   scheduleType: "OUTBOUND" | "INBOUND";
   currentBusNumber?: number;
+  currentStation?: string;
 }
 
-export default function BusChangeModal({ onClose, onSuccess, scheduleType, currentBusNumber }: BusChangeModalProps) {
+export default function BusChangeModal({ onClose, onSuccess, scheduleType, currentBusNumber, currentStation }: BusChangeModalProps) {
   const { getBuses } = useBus();
   const { showToast } = useToast();
 
@@ -115,7 +116,11 @@ export default function BusChangeModal({ onClose, onSuccess, scheduleType, curre
     (step === "bus" && selectedBus !== null) ||
     (step === "station" && selectedStation !== null);
 
-  const stations = selectedBus ? (stationsMap[selectedBus.busNumber] ?? []) : [];
+  const allStations = selectedBus ? (stationsMap[selectedBus.busNumber] ?? []) : [];
+  // 같은 호차 선택 시 현재 정류장 제외
+  const stations = selectedBus?.busNumber === currentBusNumber
+    ? allStations.filter(s => s !== currentStation)
+    : allStations;
   const showBack = step !== "bus" && step !== "success";
   const showNext = step === "bus" || step === "station";
 
@@ -147,13 +152,18 @@ export default function BusChangeModal({ onClose, onSuccess, scheduleType, curre
           <div className="flex flex-col gap-[10px] mb-[24px]">
             {buses.map((bus) => {
               const isCurrent = bus.busNumber === currentBusNumber;
+              const busStations = stationsMap[bus.busNumber] ?? [];
+              // 같은 호차라도 정류장 변경 가능한 경우: 현재 정류장 외 다른 정류장이 있을 때
+              const otherStations = busStations.filter(s => s !== currentStation);
+              const canSelectSameBus = isCurrent && otherStations.length > 0;
+              const disabled = isCurrent && !canSelectSameBus;
               return (
                 <button
                   key={bus.id}
-                  onClick={() => setSelectedBus(bus)}
-                  disabled={isCurrent}
+                  onClick={() => !disabled && setSelectedBus(bus)}
+                  disabled={disabled}
                   className={`w-full h-[56px] rounded-[14px] font-semibold text-[15px] border-2 transition-all ${
-                    isCurrent
+                    disabled
                       ? "bg-[#F7F7F7] border-transparent text-[#C0C0C0] cursor-not-allowed"
                       : selectedBus?.id === bus.id
                       ? "bg-[#E8F8F4] border-[#05A787] text-[#05A787]"
@@ -161,7 +171,9 @@ export default function BusChangeModal({ onClose, onSuccess, scheduleType, curre
                   }`}
                 >
                   {bus.name || `${bus.busNumber}호차`}
-                  {isCurrent && <span className="ml-[6px] text-[12px] font-normal">(현재 호차)</span>}
+                  {isCurrent && <span className="ml-[6px] text-[12px] font-normal">
+                    {canSelectSameBus ? "(정류장 변경)" : "(변경 불가)"}
+                  </span>}
                 </button>
               );
             })}

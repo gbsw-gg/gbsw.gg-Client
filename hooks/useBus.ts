@@ -13,6 +13,7 @@ export interface BusMember {
   status: MemberStatus;
   checkTime: string;
   reason: string;
+  station?: string;
 }
 
 export interface Bus {
@@ -29,6 +30,7 @@ export interface BusStatus {
   boarding: number;
   preAbsent: number;
   absent: number;
+  station?: string;
 }
 
 export function useBus() {

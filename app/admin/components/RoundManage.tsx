@@ -18,6 +18,7 @@ const TYPE_LABEL: Record<string, string> = {
   INBOUND: '귀교',
 };
 
+
 export default function RoundManage() {
   const [rounds, setRounds] = useState<Schedule[]>([]);
   const [loaded, setLoaded] = useState(false);

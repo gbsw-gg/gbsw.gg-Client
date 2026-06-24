@@ -2,6 +2,7 @@ import "@/styles/globals.css";
 import { Inter } from "next/font/google";
 import { ToastProvider } from "@/context/ToastContext";
 import { UserProvider } from "@/context/UserContext";
+import { Analytics } from "@vercel/analytics/next";
 import type { Metadata } from "next";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -29,6 +30,7 @@ export default function RootLayout({
             </main>
           </ToastProvider>
         </UserProvider>
+        <Analytics />
       </body>
     </html>
   );
