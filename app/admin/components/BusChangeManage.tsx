@@ -36,7 +36,6 @@ export default function BusChangeManage() {
   const [loaded, setLoaded] = useState(false);
 
   const fetchRequests = useCallback((status: FilterStatus) => {
-    setLoaded(false);
     api.get<ApiResponse<BusChangeRequest[]>>(`/api/admin/bus-change-requests?status=${status}`)
       .then(res => { if (res.success) setRequests(res.data); })
       .catch(() => {})
@@ -47,6 +46,7 @@ export default function BusChangeManage() {
 
   const handleApprove = async (id: number) => {
     await api.patch<ApiResponse>(`/api/admin/bus-change-requests/${id}/approve`).catch(() => {});
+    setLoaded(false);
     fetchRequests(filter);
   };
 
@@ -58,7 +58,10 @@ export default function BusChangeManage() {
         {TABS.map(tab => (
           <div
             key={tab.value}
-            onClick={() => setFilter(tab.value)}
+            onClick={() => {
+              setLoaded(false);
+              setFilter(tab.value);
+            }}
             className={`px-4 h-full flex items-center rounded-lg text-[12px] font-medium cursor-pointer duration-200 ${
               filter === tab.value ? 'bg-[#02AB87] text-white font-bold' : 'bg-[#f1f1f1] text-[#3c3c3c]'
             }`}

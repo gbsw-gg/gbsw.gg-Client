@@ -25,7 +25,7 @@ export default function Header({ selected, onSelect }: { selected: Menu; onSelec
           {user && <p className="text-[14px] font-medium text-white">교사 {user.name}</p>}
         </div>
         <div className="flex items-center gap-3.5">
-          <button onClick={() => setPasswordChangeOpen(true)} aria-label="비밀번호 변경" className="cursor-pointer">
+          <button onClick={() => setPasswordChangeOpen(true)} aria-label="비밀번호 관리" className="cursor-pointer">
             <KeyRound color="white" size={22} />
           </button>
           <button onClick={logout} aria-label="로그아웃" className="cursor-pointer">
@@ -51,7 +51,7 @@ export default function Header({ selected, onSelect }: { selected: Menu; onSelec
         </div>
       </div>
 
-      {passwordChangeOpen && <PasswordChangeModal onClose={() => setPasswordChangeOpen(false)} />}
+      {passwordChangeOpen && <PasswordChangeModal onClose={() => setPasswordChangeOpen(false)} allowStudentReset />}
     </div>
   );
 }
