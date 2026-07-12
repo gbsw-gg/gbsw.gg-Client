@@ -4,6 +4,7 @@ const backendUrl =
   process.env.NEXT_PUBLIC_GBSW_GG_BACKEND_URL ?? "http://43.201.251.100";
 
 const nextConfig: NextConfig = {
+  output: "standalone",
   async rewrites() {
     return [
       {
