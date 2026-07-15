@@ -18,7 +18,7 @@ import PasswordChangeModal from "@/components/modals/PasswordChangeModal";
 import LogoutModal from "@/components/modals/LogoutModal";
 
 type StatusType = "미확인" | "탑승 완료" | "미탑승";
-type ModalType = "checkin" | "absent" | null;
+type ModalType = "checkin" | "absent" | "cancelAbsent" | null;
 type TabType = "checkin" | "members";
 
 type StudentStatus = "사전 미탑승" | "탑승 완료" | "미확인";
@@ -42,7 +42,7 @@ const LEADER_TYPE_LABEL: Record<string, string> = {
 
 export default function LeaderPage() {
   const { logout } = useAuth();
-  const { getMyBoarding, checkBoarding, requestAbsent } = useAttendance();
+  const { getMyBoarding, checkBoarding, requestAbsent, cancelAbsent } = useAttendance();
   const { getSchedule } = useSchedule();
   const { getMyBusMembers, getMyBusStatus } = useBus();
   const { user } = useUser();
@@ -142,6 +142,13 @@ export default function LeaderPage() {
         setStatus("미탑승");
         setAbsentReason(reason);
         setTimestamp(formatTime(new Date().toISOString()));
+        await loadBusData();
+      } else if (modal === "cancelAbsent") {
+        await cancelAbsent(schedule.id);
+        setStatus("미확인");
+        setAbsentReason(undefined);
+        setTimestamp(undefined);
+        await loadBusData();
       }
     } catch {
       // 에러 토스트는 useAttendance 내부에서 처리
@@ -178,6 +185,16 @@ export default function LeaderPage() {
           checkStarted={schedule ? new Date() > new Date(schedule.checkStartAt) : false}
           absentExpired={schedule ? new Date() > new Date(schedule.preAbsentDeadline) : false}
         />
+      )}
+      {status === "미탑승" && (
+        <div className="mx-[25px] mt-[20px]">
+          <button
+            onClick={() => setModal("cancelAbsent")}
+            className="w-full h-[56px] bg-[#F59E0B] rounded-[14px] flex items-center justify-center gap-[8px] active:opacity-80 transition-opacity"
+          >
+            <span className="text-white font-semibold text-[16px]">미탑승 취소하기</span>
+          </button>
+        </div>
       )}
       <Notice />
     </>
